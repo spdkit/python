@@ -1,0 +1,36 @@
+# [[file:spdkit-python.note::e345323a][e345323a]]
+[package]
+name = "spdkit-python"
+version = "0.1.0"
+edition = "2021"
+authors = ["Wenping Guo <ybyygu@gmail.com>"]
+description = "structure prediction kit for python"
+license = "GPL-3.0"
+homepage = "https://github.com/gosh-rs/gosh"
+repository = "https://github.com/gosh-rs/gosh"
+
+[dependencies]
+gut = { version = "0.4", package = "gchemol-gut" }
+educate = { version="0.1",  features = ["adhoc"] }
+gchemol = { version="0.1", features=["adhoc"] }
+
+[dev-dependencies]
+criterion = "0.4"
+
+# [[bench]]
+# name = "my_benchmark"
+# harness = false
+
+[features]
+# for adhoc hacking
+adhoc = []
+
+[dependencies.pyo3]
+version = "0.17.3"
+# features = ["extension-module", "hashbrown", "num-bigint", "num-complex", "indexmap"]
+features = ["extension-module", "anyhow", "abi3-py39"]
+
+[lib]
+name = "spdkit"
+crate-type = ["cdylib"]
+# e345323a ends here
