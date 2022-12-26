@@ -222,16 +222,6 @@ impl Molecule {
         Ok(rings)
     }
 
-    fn educated_rebond(&mut self) {
-        use educate::prelude::*;
-        self.inner.educated_rebond();
-    }
-
-    fn educated_clean(&mut self) {
-        use educate::prelude::*;
-        self.inner.educated_clean();
-    }
-
     /// Return an iterator over a tuple of atom serial number `n` and
     /// its associated `Atom` (n, Atom)
     fn atoms(&self) -> PyResult<PyAtomsIter> {
@@ -244,6 +234,21 @@ impl Molecule {
             inner: atoms.into_iter(),
         };
         Ok(atoms)
+    }
+
+    fn educated_rebond(&mut self) {
+        use educate::prelude::*;
+        self.inner.educated_rebond();
+    }
+    
+    fn educated_clean(&mut self) {
+        use educate::prelude::*;
+        self.inner.educated_clean();
+    }
+    
+    fn educated_clean_selection(&mut self, selection: Vec<usize>) {
+        use educate::prelude::*;
+        self.inner.educated_clean_selection(&selection);
     }
 }
 // 969a9313 ends here
