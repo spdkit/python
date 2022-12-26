@@ -11,6 +11,7 @@ repository = "https://github.com/gosh-rs/gosh"
 
 [dependencies]
 gut = { version = "0.4", package = "gchemol-gut" }
+spdkit = { version = "0.1" }
 educate = { version = "0.1", features = ["adhoc"] }
 distances = { version = "0.1", features = ["adhoc"] }
 gchemol = { version = "0.1", features = ["adhoc"] }

@@ -251,6 +251,20 @@ impl Molecule {
         self.inner.educated_clean_selection(&selection);
     }
     
+    /// Return unique fingerprint of current molecule
+    fn fingerprint(&self) -> String {
+        use spdkit::prelude::FingerPrintExt;
+        self.inner.fingerprint()
+    }
+    
+    /// This is an operation of reordering the atoms in a way that does not depend
+    /// on where they were before. The bonding graph is important for this
+    /// operation.
+    fn reorder_cannonically(&mut self) {
+        use spdkit::prelude::FingerPrintExt;
+        self.inner.reorder_cannonically();
+    }
+    
     /// Convert `Molecule` to a graph object for distance geometry
     /// refinement.
     fn to_distance_geometry_graph(&self) -> DgGraph {
