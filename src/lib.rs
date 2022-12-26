@@ -250,8 +250,56 @@ impl Molecule {
         use educate::prelude::*;
         self.inner.educated_clean_selection(&selection);
     }
+    
+    /// Convert `Molecule` to a graph object for distance geometry
+    /// refinement.
+    fn to_distance_geometry_graph(&self) -> DgGraph {
+        let dg = self.inner.distance_geometry_graph();
+        DgGraph { inner: dg }
+    }
 }
 // 969a9313 ends here
+
+// [[file:../spdkit-python.note::df84f7ba][df84f7ba]]
+use distances::prelude::*;
+
+/// Represents a graph object for refinement of molecule structure
+/// using distance geometry algorithm.
+#[pyclass(mapping, module = "spdkit", subclass)]
+#[derive(Clone)]
+pub struct DgGraph {
+    inner: distances::DgGraph,
+}
+
+#[pymethods]
+impl DgGraph {
+    /// Set weight for atom `i` and `j` for refinement of molecule structure.
+    fn set_distance_weight(&mut self, i: usize, j: usize, w: f64) {
+        self.inner.set_distance_weight(i, j, w);
+    }
+
+    /// Set distance bound (lower/upper) for atom `i` and `j` for
+    /// refinement of molecule structure.
+    fn set_distance_bound(&mut self, i: usize, j: usize, lb: f64, ub: f64) {
+        self.inner.set_distance_bound(i, j, lb, ub);
+    }
+
+    /// Returns distance bound (lower/upper) for atom `i` and `j`.
+    fn get_distance_bound(&self, i: usize, j: usize) -> (f64, f64) {
+        self.inner.distance_bound(i, j)
+    }
+
+    /// Returns distance weight for atom `i` and `j`.
+    fn get_distance_weight(&self, i: usize, j: usize) -> f64 {
+        self.inner.distance_weight(i, j)
+    }
+
+    /// Refine molecule structure `mol` using distance geometry.
+    fn refine_molecule(&mut self, mol: &mut Molecule) {
+        self.inner.refine_molecule(&mut mol.inner);
+    }
+}
+// df84f7ba ends here
 
 // [[file:../spdkit-python.note::*atom][atom:1]]
 use gchemol::Atom as GAtom;
