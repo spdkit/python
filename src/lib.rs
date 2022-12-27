@@ -236,6 +236,14 @@ impl Molecule {
         Ok(atoms)
     }
 
+    /// Return a sub molecule induced by `atoms` in parent
+    /// molecule. Return None if atom serial numbers are
+    /// invalid. Return an empty Molecule if `atoms` empty.
+    pub fn get_sub_molecule(&self, atoms: Vec<usize>) -> Option<Molecule> {
+        let inner = self.inner.get_sub_molecule(atoms)?;
+        Self { inner }.into()
+    }
+
     fn educated_rebond(&mut self) {
         use educate::prelude::*;
         self.inner.educated_rebond();
@@ -314,6 +322,15 @@ impl DgGraph {
     }
 }
 // df84f7ba ends here
+
+// [[file:../spdkit-python.note::c400da41][c400da41]]
+#[pyfunction]
+fn set_verbosity(level: u8) {
+    let mut log = gut::cli::Verbosity::default();
+    log.set_verbosity(level);
+    log.setup_logger();
+}
+// c400da41 ends here
 
 // [[file:../spdkit-python.note::*atom][atom:1]]
 use gchemol::Atom as GAtom;
@@ -411,6 +428,7 @@ fn read(path: String) -> PyResult<PyMoleculeIter> {
 fn pygchemol(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_class::<Molecule>()?;
+    m.add_function(wrap_pyfunction!(set_verbosity, m)?)?;
 
     let io = PyModule::new(_py, "io")?;
     io.add_function(wrap_pyfunction!(read, io)?)?;
