@@ -240,7 +240,7 @@ impl Molecule {
     /// molecule. Return None if atom serial numbers are
     /// invalid. Return an empty Molecule if `atoms` empty.
     pub fn get_sub_molecule(&self, atoms: Vec<usize>) -> Option<Molecule> {
-        let inner = self.inner.get_sub_molecule(atoms)?;
+        let inner = self.inner.get_sub_molecule(&atoms)?;
         Self { inner }.into()
     }
 
@@ -268,9 +268,9 @@ impl Molecule {
     /// This is an operation of reordering the atoms in a way that does not depend
     /// on where they were before. The bonding graph is important for this
     /// operation.
-    fn reorder_cannonically(&mut self) {
+    fn reorder_cannonically(&mut self) -> Vec<usize> {
         use spdkit::prelude::FingerPrintExt;
-        self.inner.reorder_cannonically();
+        self.inner.reorder_cannonically()
     }
     
     /// Convert `Molecule` to a graph object for distance geometry
