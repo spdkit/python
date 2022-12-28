@@ -154,7 +154,32 @@ impl Molecule {
     /// structure, this method will return the distance under the
     /// minimum image convention.
     fn distance(&self, i: usize, j: usize) -> PyResult<f64> {
-        let d = self.inner.distance(i, j);
+        let d = self
+            .inner
+            .get_distance(i, j)
+            .ok_or(format_err!("invalid serial numbers: {i}, {j}"))?;
+        Ok(d)
+    }
+
+    /// Return the angle between atoms `i`, `j`, `k` in degrees,
+    /// irrespective periodic images.
+    fn angle(&self, i: usize, j: usize, k: usize) -> PyResult<f64> {
+        let d = self
+            .inner
+            .get_angle(i, j, k)
+            .ok_or(format_err!("invalid serial numbers: {i}, {j}, {k}"))?
+            .to_degrees();
+        Ok(d)
+    }
+
+    /// Return the torsion angle between atoms `i`, `j`, `k`, `l` in
+    /// degrees, irrespective periodic images.
+    fn torsion(&self, i: usize, j: usize, k: usize, l: usize) -> PyResult<f64> {
+        let d = self
+            .inner
+            .get_torsion(i, j, k, l)
+            .ok_or(format_err!("invalid serial numbers: {i}, {j}, {k}, {l}"))?
+            .to_degrees();
         Ok(d)
     }
 
