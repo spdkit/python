@@ -222,18 +222,22 @@ impl Molecule {
         Ok(rings)
     }
 
+    /// Return atom serial numbers.
+    fn numbers(&self) -> Vec<usize> {
+        self.inner.numbers().collect()
+    }
+
     /// Return an iterator over a tuple of atom serial number `n` and
     /// its associated `Atom` (n, Atom)
-    fn atoms(&self) -> PyResult<PyAtomsIter> {
+    fn atoms(&self) -> PyAtomsIter {
         let atoms: Vec<_> = self
             .inner
             .atoms()
             .map(|(i, atom)| (i, Atom { inner: atom.to_owned() }))
             .collect();
-        let atoms = PyAtomsIter {
+        PyAtomsIter {
             inner: atoms.into_iter(),
-        };
-        Ok(atoms)
+        }
     }
 
     /// Return a sub molecule induced by `atoms` in parent
