@@ -4,23 +4,31 @@ use pyo3::prelude::*;
 
 // [[file:../spdkit-python.note::969a9313][969a9313]]
 use gchemol::prelude::*;
-use gchemol::Molecule as GMolecule;
+use gchemol::Molecule;
 use gut::prelude::*;
 
-#[pyclass(mapping, module = "spdkit", subclass)]
+/// The main object featured in this library. This object represents a
+/// molecule, with atoms and bonds.
+#[pyclass(subclass)]
 #[derive(Clone)]
-pub struct Molecule {
-    inner: GMolecule,
+pub struct _Molecule {
+    inner: Molecule,
 }
 
 #[pymethods]
-impl Molecule {
+impl _Molecule {
     /// Construct `Molecule` object from a file `path`. If the file
     /// contains multiple molecules, only the last one will be read.
     #[staticmethod]
     fn from_file(py: Python, path: String) -> PyResult<Self> {
-        let inner = GMolecule::from_file(&path)?;
+        let inner = Molecule::from_file(&path)?;
         Ok(Self { inner })
+    }
+
+    #[staticmethod]
+    fn from_atoms(atoms: Vec<_Atom>) -> Self {
+        let inner = Molecule::from_atoms(atoms.into_iter().map(|m| m.inner));
+        Self { inner }
     }
 
     /// Return its json representation of molecule object.
@@ -258,7 +266,7 @@ impl Molecule {
         let atoms: Vec<_> = self
             .inner
             .atoms()
-            .map(|(i, atom)| (i, Atom { inner: atom.to_owned() }))
+            .map(|(i, atom)| (i, _Atom { inner: atom.to_owned() }))
             .collect();
         PyAtomsIter {
             inner: atoms.into_iter(),
@@ -268,7 +276,7 @@ impl Molecule {
     /// Return a sub molecule induced by `atoms` in parent
     /// molecule. Return None if atom serial numbers are
     /// invalid. Return an empty Molecule if `atoms` empty.
-    pub fn get_sub_molecule(&self, atoms: Vec<usize>) -> Option<Molecule> {
+    pub fn get_sub_molecule(&self, atoms: Vec<usize>) -> Option<Self> {
         let inner = self.inner.get_sub_molecule(&atoms)?;
         Self { inner }.into()
     }
@@ -346,7 +354,7 @@ impl DgGraph {
     }
 
     /// Refine molecule structure `mol` using distance geometry.
-    fn refine_molecule(&mut self, mol: &mut Molecule) {
+    fn refine_molecule(&mut self, mol: &mut _Molecule) {
         self.inner.refine_molecule(&mut mol.inner);
     }
 }
@@ -361,17 +369,25 @@ fn set_verbosity(level: u8) {
 }
 // c400da41 ends here
 
-// [[file:../spdkit-python.note::*atom][atom:1]]
-use gchemol::Atom as GAtom;
+// [[file:../spdkit-python.note::95be1618][95be1618]]
+use gchemol::Atom;
 
-#[pyclass]
+#[pyclass(subclass)]
 #[derive(Clone)]
-pub struct Atom {
-    inner: GAtom,
+pub struct _Atom {
+    inner: Atom,
 }
 
 #[pymethods]
-impl Atom {
+impl _Atom {
+    #[new]
+    /// Construct `Atom` object from `symbol` and `position`.
+    fn new(symbol: String, position: [f64; 3]) -> Self {
+        Self {
+            inner: Atom::new(symbol, position),
+        }
+    }
+
     /// Return element symbol
     fn symbol(&self) -> PyResult<String> {
         Ok(self.inner.symbol().to_string())
@@ -407,12 +423,12 @@ impl Atom {
         Ok(self.inner.get_cov_radius())
     }
 }
-// atom:1 ends here
+// 95be1618 ends here
 
 // [[file:../spdkit-python.note::a31e85a4][a31e85a4]]
 #[pyclass]
 struct PyAtomsIter {
-    inner: std::vec::IntoIter<(usize, Atom)>,
+    inner: std::vec::IntoIter<(usize, _Atom)>,
 }
 
 #[pymethods]
@@ -421,14 +437,14 @@ impl PyAtomsIter {
         slf
     }
 
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<(usize, Atom)> {
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<(usize, _Atom)> {
         slf.inner.next()
     }
 }
 
 #[pyclass]
 struct PyMoleculeIter {
-    iter: Box<dyn Iterator<Item = Molecule> + Send>,
+    iter: Box<dyn Iterator<Item = _Molecule> + Send>,
 }
 
 #[pymethods]
@@ -436,7 +452,7 @@ impl PyMoleculeIter {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
     }
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Molecule> {
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<_Molecule> {
         slf.iter.next()
     }
 }
@@ -445,7 +461,7 @@ impl PyMoleculeIter {
 /// Read a list of `Molecule` from `path`. Returns an iterator over
 /// `Molecule`, which allows reading a large file out of memory.
 fn read(path: String) -> PyResult<PyMoleculeIter> {
-    let mols = gchemol::io::read(path)?.map(|inner| Molecule { inner });
+    let mols = gchemol::io::read(path)?.map(|inner| _Molecule { inner });
     let mols = PyMoleculeIter { iter: Box::new(mols) };
     Ok(mols)
 }
@@ -454,12 +470,13 @@ fn read(path: String) -> PyResult<PyMoleculeIter> {
 // [[file:../spdkit-python.note::fbe87af8][fbe87af8]]
 #[pymodule]
 #[pyo3(name = "spdkit")]
-fn pygchemol(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
-    m.add_class::<Molecule>()?;
+    m.add_class::<_Molecule>()?;
+    m.add_class::<_Atom>()?;
     m.add_function(wrap_pyfunction!(set_verbosity, m)?)?;
 
-    let io = PyModule::new(_py, "io")?;
+    let io = PyModule::new(py, "io")?;
     io.add_function(wrap_pyfunction!(read, io)?)?;
     m.add_submodule(io)?;
 

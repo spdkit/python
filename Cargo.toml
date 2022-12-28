@@ -29,7 +29,8 @@ adhoc = []
 
 [dependencies.pyo3]
 version = "0.17.3"
-# features = ["extension-module", "hashbrown", "num-bigint", "num-complex", "indexmap"]
+# multiple-pymethods requires Rust 1.62 or above
+# features = ["extension-module", "anyhow", "abi3-py39", "multiple-pymethods"]
 features = ["extension-module", "anyhow", "abi3-py39"]
 
 [lib]
