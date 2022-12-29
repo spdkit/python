@@ -163,7 +163,7 @@ impl PyMolecule {
         let inner = Molecule::from_file(&path)?;
         // let instance = cls.call0()?;
         // let mol: Py<Self> = instance.extract()?;
-        Ok(Self {inner})
+        Ok(Self { inner })
     }
 
     #[new]
@@ -449,6 +449,12 @@ impl PyMolecule {
     fn get_scaled_positions(&self) -> Option<Vec<[f64; 3]>> {
         let scaled = self.inner.get_scaled_positions()?.collect_vec();
         scaled.into()
+    }
+
+    /// Break molecule into multiple fragments based on its bonding
+    /// connectivity.
+    fn fragmented(&self) -> Vec<Self> {
+        self.inner.fragmented().map(|inner| Self { inner }).collect()
     }
 
     fn educated_rebond(&mut self) {
