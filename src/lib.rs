@@ -6,14 +6,15 @@ use pyo3::types::PyType;
 // [[file:../spdkit-python.note::95be1618][95be1618]]
 use gchemol::Atom;
 
-#[pyclass(subclass)]
+#[pyclass(name = "Atom")]
 #[derive(Clone)]
-pub struct _Atom {
+/// Atom is the smallest particle still characterizing a chemical element.
+pub struct PyAtom {
     inner: Atom,
 }
 
 #[pymethods]
-impl _Atom {
+impl PyAtom {
     #[new]
     /// Construct `Atom` object from `symbol` and `position`.
     fn new(symbol: String, position: [f64; 3]) -> Self {
@@ -67,14 +68,14 @@ impl _Atom {
 use gchemol::Lattice;
 
 /// Periodic 3D lattice
-#[pyclass(subclass)]
+#[pyclass(name = "Lattice", subclass)]
 #[derive(Clone)]
-pub struct _Lattice {
+pub struct PyLattice {
     inner: Lattice,
 }
 
 #[pymethods]
-impl _Lattice {
+impl PyLattice {
     /// Construct Lattice from lattice matrix (3x3).
     #[new]
     fn new(tvs: [[f64; 3]; 3]) -> Self {
@@ -147,24 +148,40 @@ use gut::prelude::*;
 
 /// The main object featured in this library. This object represents a
 /// molecule, with atoms and bonds.
-#[pyclass(subclass)]
+#[pyclass(name = "Molecule", subclass)]
 #[derive(Clone)]
-pub struct _Molecule {
+pub struct PyMolecule {
     inner: Molecule,
 }
 
 #[pymethods]
-impl _Molecule {
+impl PyMolecule {
     /// Construct `Molecule` object from a file `path`. If the file
     /// contains multiple molecules, only the last one will be read.
     #[staticmethod]
     fn from_file(path: String) -> PyResult<Self> {
         let inner = Molecule::from_file(&path)?;
-        Ok(Self { inner })
+        // let instance = cls.call0()?;
+        // let mol: Py<Self> = instance.extract()?;
+        Ok(Self {inner})
     }
 
     #[new]
-    fn from_atoms(atoms: Vec<_Atom>) -> Self {
+    /// Construct an empty `Molecule` object named as `title`.
+    fn new(title: String) -> Self {
+        let inner = Molecule::new(&title);
+        Self { inner }
+    }
+
+    /// Return the name of the molecule, which is typpically modified
+    /// for safely storing in various chemical file formats.
+    fn title(&self) -> String {
+        self.inner.title()
+    }
+
+    #[staticmethod]
+    /// Build a molecule from atoms associated with serial numbers from 1.
+    fn from_atoms(atoms: Vec<PyAtom>) -> Self {
         let inner = Molecule::from_atoms(atoms.into_iter().map(|m| m.inner));
         Self { inner }
     }
@@ -182,9 +199,8 @@ impl _Molecule {
     }
 
     /// Renumber atoms consecutively from 1.
-    fn renumber(&mut self) -> PyResult<()> {
+    fn renumber(&mut self) {
         self.inner.renumber();
-        Ok(())
     }
 
     /// Write molecule to file with `path`. The molecule format will
@@ -216,13 +232,6 @@ impl _Molecule {
     fn nbonds(&self) -> PyResult<usize> {
         let n = self.inner.nbonds();
         Ok(n)
-    }
-
-    /// Return the name of the molecule, which is typpically modified
-    /// for safely storing in various chemical file formats.
-    fn title(&self) -> PyResult<String> {
-        let t = self.inner.title();
-        Ok(t)
     }
 
     /// Return the shortest distance counted in number of chemical
@@ -404,7 +413,7 @@ impl _Molecule {
         let atoms: Vec<_> = self
             .inner
             .atoms()
-            .map(|(i, atom)| (i, _Atom { inner: atom.to_owned() }))
+            .map(|(i, atom)| (i, PyAtom { inner: atom.to_owned() }))
             .collect();
         PyAtomsIter {
             inner: atoms.into_iter(),
@@ -420,14 +429,14 @@ impl _Molecule {
     }
 
     /// Set periodic lattice.
-    fn set_lattice(&mut self, lat: _Lattice) {
+    fn set_lattice(&mut self, lat: PyLattice) {
         self.inner.set_lattice(lat.inner);
     }
 
     /// Get periodic lattice.
-    fn get_lattice(&self) -> Option<_Lattice> {
+    fn get_lattice(&self) -> Option<PyLattice> {
         let lat = self.inner.get_lattice()?;
-        _Lattice { inner: *lat }.into()
+        PyLattice { inner: *lat }.into()
     }
 
     /// Return true if Molecule is a periodic structure.
@@ -442,41 +451,41 @@ impl _Molecule {
         scaled.into()
     }
 
-    // fn educated_rebond(&mut self) {
-    //     use educate::prelude::*;
-    //     self.inner.educated_rebond();
-    // }
-    // 
-    // fn educated_clean(&mut self) {
-    //     use educate::prelude::*;
-    //     self.inner.educated_clean();
-    // }
-    // 
-    // fn educated_clean_selection(&mut self, selection: Vec<usize>) {
-    //     use educate::prelude::*;
-    //     self.inner.educated_clean_selection(&selection);
-    // }
-    // 
-    // /// Return unique fingerprint of current molecule
-    // fn fingerprint(&self) -> String {
-    //     use spdkit::prelude::FingerPrintExt;
-    //     self.inner.fingerprint()
-    // }
-    // 
-    // /// This is an operation of reordering the atoms in a way that does not depend
-    // /// on where they were before. The bonding graph is important for this
-    // /// operation.
-    // fn reorder_cannonically(&mut self) -> Vec<usize> {
-    //     use spdkit::prelude::FingerPrintExt;
-    //     self.inner.reorder_cannonically()
-    // }
-    // 
-    // /// Convert `Molecule` to a graph object for distance geometry
-    // /// refinement.
-    // fn to_distance_geometry_graph(&self) -> DgGraph {
-    //     let dg = self.inner.distance_geometry_graph();
-    //     DgGraph { inner: dg }
-    // }
+    fn educated_rebond(&mut self) {
+        use educate::prelude::*;
+        self.inner.educated_rebond();
+    }
+    
+    fn educated_clean(&mut self) {
+        use educate::prelude::*;
+        self.inner.educated_clean();
+    }
+    
+    fn educated_clean_selection(&mut self, selection: Vec<usize>) {
+        use educate::prelude::*;
+        self.inner.educated_clean_selection(&selection);
+    }
+    
+    /// Return unique fingerprint of current molecule
+    fn fingerprint(&self) -> String {
+        use spdkit::prelude::FingerPrintExt;
+        self.inner.fingerprint()
+    }
+    
+    /// This is an operation of reordering the atoms in a way that does not depend
+    /// on where they were before. The bonding graph is important for this
+    /// operation.
+    fn reorder_cannonically(&mut self) -> Vec<usize> {
+        use spdkit::prelude::FingerPrintExt;
+        self.inner.reorder_cannonically()
+    }
+    
+    /// Convert `Molecule` to a graph object for distance geometry
+    /// refinement.
+    fn to_distance_geometry_graph(&self) -> DgGraph {
+        let dg = self.inner.distance_geometry_graph();
+        DgGraph { inner: dg }
+    }
 }
 // 969a9313 ends here
 
@@ -515,7 +524,7 @@ impl DgGraph {
     }
 
     /// Refine molecule structure `mol` using distance geometry.
-    fn refine_molecule(&mut self, mol: &mut _Molecule) {
+    fn refine_molecule(&mut self, mol: &mut PyMolecule) {
         self.inner.refine_molecule(&mut mol.inner);
     }
 }
@@ -533,7 +542,7 @@ fn set_verbosity(level: u8) {
 // [[file:../spdkit-python.note::a31e85a4][a31e85a4]]
 #[pyclass]
 struct PyAtomsIter {
-    inner: std::vec::IntoIter<(usize, _Atom)>,
+    inner: std::vec::IntoIter<(usize, PyAtom)>,
 }
 
 #[pymethods]
@@ -542,14 +551,14 @@ impl PyAtomsIter {
         slf
     }
 
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<(usize, _Atom)> {
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<(usize, PyAtom)> {
         slf.inner.next()
     }
 }
 
 #[pyclass]
 struct PyMoleculeIter {
-    iter: Box<dyn Iterator<Item = _Molecule> + Send>,
+    iter: Box<dyn Iterator<Item = PyMolecule> + Send>,
 }
 
 #[pymethods]
@@ -557,7 +566,7 @@ impl PyMoleculeIter {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
     }
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<_Molecule> {
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<PyMolecule> {
         slf.iter.next()
     }
 }
@@ -566,7 +575,7 @@ impl PyMoleculeIter {
 /// Read a list of `Molecule` from `path`. Returns an iterator over
 /// `Molecule`, which allows reading a large file out of memory.
 fn read(path: String) -> PyResult<PyMoleculeIter> {
-    let mols = gchemol::io::read(path)?.map(|inner| _Molecule { inner });
+    let mols = gchemol::io::read(path)?.map(|inner| PyMolecule { inner });
     let mols = PyMoleculeIter { iter: Box::new(mols) };
     Ok(mols)
 }
@@ -577,9 +586,9 @@ fn read(path: String) -> PyResult<PyMoleculeIter> {
 #[pyo3(name = "spdkit")]
 fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
-    m.add_class::<_Molecule>()?;
-    m.add_class::<_Atom>()?;
-    m.add_class::<_Lattice>()?;
+    m.add_class::<PyMolecule>()?;
+    m.add_class::<PyAtom>()?;
+    m.add_class::<PyLattice>()?;
     m.add_function(wrap_pyfunction!(set_verbosity, m)?)?;
 
     let io = PyModule::new(py, "io")?;
