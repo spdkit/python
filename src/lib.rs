@@ -1,6 +1,144 @@
 // [[file:../spdkit-python.note::0cbf1e93][0cbf1e93]]
 use pyo3::prelude::*;
+use pyo3::types::PyType;
 // 0cbf1e93 ends here
+
+// [[file:../spdkit-python.note::95be1618][95be1618]]
+use gchemol::Atom;
+
+#[pyclass(subclass)]
+#[derive(Clone)]
+pub struct _Atom {
+    inner: Atom,
+}
+
+#[pymethods]
+impl _Atom {
+    #[new]
+    /// Construct `Atom` object from `symbol` and `position`.
+    fn new(symbol: String, position: [f64; 3]) -> Self {
+        Self {
+            inner: Atom::new(symbol, position),
+        }
+    }
+
+    /// Return element symbol
+    fn symbol(&self) -> String {
+        self.inner.symbol().to_string()
+    }
+
+    /// Return atomic number
+    fn number(&self) -> usize {
+        self.inner.number()
+    }
+
+    /// Get mass in atomic mass unit. Return None if atom is dummy.
+    fn get_mass(&self) -> Option<f64> {
+        self.inner.get_mass()
+    }
+
+    /// Return atom position in 3D Cartesian coordinates
+    fn position(&self) -> [f64; 3] {
+        self.inner.position()
+    }
+
+    fn set_position(&mut self, p: [f64; 3]) {
+        self.inner.set_position(p);
+    }
+
+    /// Return freezing mask array for Cartesian coordinates
+    fn freezing(&self) -> [bool; 3] {
+        self.inner.freezing()
+    }
+
+    /// Access Van der Waals radius of atom. Return None if no data available
+    fn get_vdw_radius(&self) -> Option<f64> {
+        self.inner.get_vdw_radius()
+    }
+
+    /// Access covalent radius of atom. Return None if no data available or atom is dummy.
+    fn get_cov_radius(&self) -> Option<f64> {
+        self.inner.get_cov_radius()
+    }
+}
+// 95be1618 ends here
+
+// [[file:../spdkit-python.note::c8807c91][c8807c91]]
+use gchemol::Lattice;
+
+/// Periodic 3D lattice
+#[pyclass(subclass)]
+#[derive(Clone)]
+pub struct _Lattice {
+    inner: Lattice,
+}
+
+#[pymethods]
+impl _Lattice {
+    /// Construct Lattice from lattice matrix (3x3).
+    #[new]
+    fn new(tvs: [[f64; 3]; 3]) -> Self {
+        let inner = Lattice::new(tvs);
+        Self { inner }
+    }
+
+    /// Construct lattice from lattice parameters Unit cell angles in degrees, lengths in Angstrom
+    #[staticmethod]
+    fn from_params(a: f64, b: f64, c: f64, alpha: f64, beta: f64, gamma: f64) -> Self {
+        let inner = Lattice::from_params(a, b, c, alpha, beta, gamma);
+        Self { inner }
+    }
+
+    /// Returns the fractional coordinates given cartesian coordinates.
+    fn to_frac(&self, p: [f64; 3]) -> [f64; 3] {
+        self.inner.to_frac(p).into()
+    }
+
+    /// Returns the cartesian coordinates given fractional coordinates.
+    fn to_cart(&self, p: [f64; 3]) -> [f64; 3] {
+        self.inner.to_cart(p).into()
+    }
+
+    /// Returns Lattice vector a.
+    fn vector_a(&self) -> [f64; 3] {
+        self.inner.vector_a().into()
+    }
+
+    /// Returns Lattice vector b.
+    fn vector_b(&self) -> [f64; 3] {
+        self.inner.vector_b().into()
+    }
+
+    /// Returns Lattice vector c.
+    fn vector_c(&self) -> [f64; 3] {
+        self.inner.vector_c().into()
+    }
+
+    /// Return the shortest vector obeying the minimum image convention.
+    fn apply_mic(&self, p: [f64; 3]) -> [f64; 3] {
+        self.inner.apply_mic(p).into()
+    }
+
+    /// Return the shortest distance between pi (point i) and the
+    /// periodic images of pj (point j) under the minimum image
+    /// convention
+    fn distance(&self, pi: [f64; 3], pj: [f64; 3]) -> f64 {
+        self.inner.distance(pi, pj).into()
+    }
+
+    /// Lattice length parameters: a, b, c.
+    fn lengths(&self) -> [f64; 3] {
+        self.inner.lengths().into()
+    }
+
+    /// Return the volume of the unit cell the cache will be updated
+    /// if necessary
+    fn volume(&self) -> f64 {
+        self.inner.volume()
+    }
+
+}
+// c8807c91 ends here
 
 // [[file:../spdkit-python.note::969a9313][969a9313]]
 use gchemol::prelude::*;
@@ -20,12 +158,12 @@ impl _Molecule {
     /// Construct `Molecule` object from a file `path`. If the file
     /// contains multiple molecules, only the last one will be read.
     #[staticmethod]
-    fn from_file(py: Python, path: String) -> PyResult<Self> {
+    fn from_file(path: String) -> PyResult<Self> {
         let inner = Molecule::from_file(&path)?;
         Ok(Self { inner })
     }
 
-    #[staticmethod]
+    #[new]
     fn from_atoms(atoms: Vec<_Atom>) -> Self {
         let inner = Molecule::from_atoms(atoms.into_iter().map(|m| m.inner));
         Self { inner }
@@ -276,46 +414,69 @@ impl _Molecule {
     /// Return a sub molecule induced by `atoms` in parent
     /// molecule. Return None if atom serial numbers are
     /// invalid. Return an empty Molecule if `atoms` empty.
-    pub fn get_sub_molecule(&self, atoms: Vec<usize>) -> Option<Self> {
+    fn get_sub_molecule(&self, atoms: Vec<usize>) -> Option<Self> {
         let inner = self.inner.get_sub_molecule(&atoms)?;
         Self { inner }.into()
     }
 
-    fn educated_rebond(&mut self) {
-        use educate::prelude::*;
-        self.inner.educated_rebond();
+    /// Set periodic lattice.
+    fn set_lattice(&mut self, lat: _Lattice) {
+        self.inner.set_lattice(lat.inner);
     }
-    
-    fn educated_clean(&mut self) {
-        use educate::prelude::*;
-        self.inner.educated_clean();
+
+    /// Get periodic lattice.
+    fn get_lattice(&self) -> Option<_Lattice> {
+        let lat = self.inner.get_lattice()?;
+        _Lattice { inner: *lat }.into()
     }
-    
-    fn educated_clean_selection(&mut self, selection: Vec<usize>) {
-        use educate::prelude::*;
-        self.inner.educated_clean_selection(&selection);
+
+    /// Return true if Molecule is a periodic structure.
+    fn is_periodic(&self) -> bool {
+        self.inner.is_periodic()
     }
-    
-    /// Return unique fingerprint of current molecule
-    fn fingerprint(&self) -> String {
-        use spdkit::prelude::FingerPrintExt;
-        self.inner.fingerprint()
+
+    /// Return fractional coordinates relative to unit cell. Return
+    /// None if not a periodic structure.
+    fn get_scaled_positions(&self) -> Option<Vec<[f64; 3]>> {
+        let scaled = self.inner.get_scaled_positions()?.collect_vec();
+        scaled.into()
     }
-    
-    /// This is an operation of reordering the atoms in a way that does not depend
-    /// on where they were before. The bonding graph is important for this
-    /// operation.
-    fn reorder_cannonically(&mut self) -> Vec<usize> {
-        use spdkit::prelude::FingerPrintExt;
-        self.inner.reorder_cannonically()
-    }
-    
-    /// Convert `Molecule` to a graph object for distance geometry
-    /// refinement.
-    fn to_distance_geometry_graph(&self) -> DgGraph {
-        let dg = self.inner.distance_geometry_graph();
-        DgGraph { inner: dg }
-    }
+
+    // fn educated_rebond(&mut self) {
+    //     use educate::prelude::*;
+    //     self.inner.educated_rebond();
+    // }
+    // 
+    // fn educated_clean(&mut self) {
+    //     use educate::prelude::*;
+    //     self.inner.educated_clean();
+    // }
+    // 
+    // fn educated_clean_selection(&mut self, selection: Vec<usize>) {
+    //     use educate::prelude::*;
+    //     self.inner.educated_clean_selection(&selection);
+    // }
+    // 
+    // /// Return unique fingerprint of current molecule
+    // fn fingerprint(&self) -> String {
+    //     use spdkit::prelude::FingerPrintExt;
+    //     self.inner.fingerprint()
+    // }
+    // 
+    // /// This is an operation of reordering the atoms in a way that does not depend
+    // /// on where they were before. The bonding graph is important for this
+    // /// operation.
+    // fn reorder_cannonically(&mut self) -> Vec<usize> {
+    //     use spdkit::prelude::FingerPrintExt;
+    //     self.inner.reorder_cannonically()
+    // }
+    // 
+    // /// Convert `Molecule` to a graph object for distance geometry
+    // /// refinement.
+    // fn to_distance_geometry_graph(&self) -> DgGraph {
+    //     let dg = self.inner.distance_geometry_graph();
+    //     DgGraph { inner: dg }
+    // }
 }
 // 969a9313 ends here
 
@@ -369,62 +530,6 @@ fn set_verbosity(level: u8) {
 }
 // c400da41 ends here
 
-// [[file:../spdkit-python.note::95be1618][95be1618]]
-use gchemol::Atom;
-
-#[pyclass(subclass)]
-#[derive(Clone)]
-pub struct _Atom {
-    inner: Atom,
-}
-
-#[pymethods]
-impl _Atom {
-    #[new]
-    /// Construct `Atom` object from `symbol` and `position`.
-    fn new(symbol: String, position: [f64; 3]) -> Self {
-        Self {
-            inner: Atom::new(symbol, position),
-        }
-    }
-
-    /// Return element symbol
-    fn symbol(&self) -> PyResult<String> {
-        Ok(self.inner.symbol().to_string())
-    }
-
-    /// Return atomic number
-    fn number(&self) -> PyResult<usize> {
-        Ok(self.inner.number())
-    }
-
-    /// Get mass in atomic mass unit. Return None if atom is dummy.
-    fn get_mass(&self) -> PyResult<Option<f64>> {
-        Ok(self.inner.get_mass())
-    }
-
-    /// Return atom position in 3D Cartesian coordinates
-    fn position(&self) -> PyResult<[f64; 3]> {
-        Ok(self.inner.position())
-    }
-
-    /// Return freezing mask array for Cartesian coordinates
-    fn freezing(&self) -> PyResult<[bool; 3]> {
-        Ok(self.inner.freezing())
-    }
-
-    /// Access Van der Waals radius of atom. Return None if no data available
-    fn get_vdw_radius(&self) -> PyResult<Option<f64>> {
-        Ok(self.inner.get_vdw_radius())
-    }
-
-    /// Access covalent radius of atom. Return None if no data available or atom is dummy.
-    fn get_cov_radius(&self) -> PyResult<Option<f64>> {
-        Ok(self.inner.get_cov_radius())
-    }
-}
-// 95be1618 ends here
-
 // [[file:../spdkit-python.note::a31e85a4][a31e85a4]]
 #[pyclass]
 struct PyAtomsIter {
@@ -474,6 +579,7 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_class::<_Molecule>()?;
     m.add_class::<_Atom>()?;
+    m.add_class::<_Lattice>()?;
     m.add_function(wrap_pyfunction!(set_verbosity, m)?)?;
 
     let io = PyModule::new(py, "io")?;
