@@ -456,6 +456,33 @@ impl PyMolecule {
     fn fragmented(&self) -> Vec<Self> {
         self.inner.fragmented().map(|inner| Self { inner }).collect()
     }
+    
+    /// Superimpose structure onto `mol_ref` which will be held fixed
+    /// during alignment. Return superposition rmsd on done.
+    ///
+    /// # NOTE
+    /// * The structure could be mirrored for better alignment.
+    /// * Heavy atoms have more weights.
+    fn superimpose_onto(&mut self, mol_ref: Self) -> f64 {
+        use gchemol::geom::prelude::*;
+        use gchemol::geom::Superimpose;
+    
+        let weights = mol_ref.inner.masses().collect_vec();
+        let positions_this = self.inner.positions().collect_vec();
+        let positions_prev = mol_ref.inner.positions().collect_vec();
+        let sp1 = Superimpose::new(&positions_this).onto(&positions_prev, weights.as_slice().into());
+        let mut positions_this_mirrored = positions_this.clone();
+        positions_this_mirrored.mirror_invert();
+        let sp2 = Superimpose::new(&positions_this_mirrored).onto(&positions_prev, weights.as_slice().into());
+        let (positions_new, rmsd) = if sp1.rmsd < sp2.rmsd {
+            (sp1.apply(&positions_this), sp1.rmsd)
+        } else {
+            (sp2.apply(&positions_this_mirrored), sp2.rmsd)
+        };
+    
+        self.inner.set_positions(positions_new);
+        rmsd
+    }
 
     fn educated_rebond(&mut self) {
         use educate::prelude::*;
