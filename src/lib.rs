@@ -516,6 +516,12 @@ impl PyMolecule {
     
         self.inner.remove_bond(i, j);
     }
+    
+    /// Return all directly bonded atoms in serial numbers with atom `n`.
+    #[pyo3(text_signature = "($self, n)")]
+    fn connected(&self, n: usize) -> Vec<usize> {
+        self.inner.connected(n).collect()
+    }
 
     /// Break molecule into multiple fragments based on its bonding
     /// connectivity.
