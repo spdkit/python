@@ -50,6 +50,12 @@ impl PyAtom {
         self.inner.set_position(p);
     }
 
+    /// Set atom symbol.
+    #[pyo3(text_signature = "($self, symbol, /)")]
+    fn set_symbol(&mut self, symbol: String) {
+        self.inner.set_symbol(symbol);
+    }
+
     /// Return freezing mask array for Cartesian coordinates
     fn freezing(&self) -> [bool; 3] {
         self.inner.freezing()
@@ -241,20 +247,6 @@ impl PyMolecule {
         Ok(self.inner.formula())
     }
 
-    /// Get the number of bonds.
-    fn nbonds(&self) -> PyResult<usize> {
-        let n = self.inner.nbonds();
-        Ok(n)
-    }
-
-    /// Return the shortest distance counted in number of chemical
-    /// bonds between two atoms. Return None if they are not
-    /// connected.
-    fn nbonds_between(&self, i: usize, j: usize) -> PyResult<Option<usize>> {
-        let n = self.inner.nbonds_between(i, j);
-        Ok(n)
-    }
-
     /// Unbuild current crystal structure leaving a nonperiodic structure
     fn unbuild_crystal(&mut self) -> PyResult<()> {
         self.inner.unbuild_crystal();
@@ -287,38 +279,6 @@ impl PyMolecule {
         } else {
             Err(pyo3::exceptions::PyException::new_err("not allowed for periodic structure"))
         }
-    }
-
-    /// Recalculates all bonds in molecule based on interatomic
-    /// distances and covalent radii. For periodic system, the bonds
-    /// are determined by applying miniumu image convention.
-    fn rebond(&mut self) -> PyResult<()> {
-        self.inner.rebond();
-        Ok(())
-    }
-
-    /// Removes all existing bonds between atoms.
-    fn unbound(&mut self) -> PyResult<()> {
-        self.inner.unbound();
-        Ok(())
-    }
-
-    /// Removes all bonds between two selections to respect pymol's
-    /// unbond command.
-    ///
-    /// # Parameters
-    ///
-    /// * atom_indices1: the first collection of atoms
-    /// * atom_indices2: the other collection of atoms
-    ///
-    /// # Reference
-    ///
-    /// * <https://pymolwiki.org/index.php/Unbond>
-    ///
-    #[pyo3(text_signature = "($self, atom_indices1, atom_indices2, /)")]
-    fn unbond(&mut self, atom_indices1: Vec<usize>, atom_indices2: Vec<usize>) -> PyResult<()> {
-        self.inner.unbond(&atom_indices1, &atom_indices2);
-        Ok(())
     }
 
     /// Return the distance between atom i and atom j. For periodic
@@ -450,6 +410,21 @@ impl PyMolecule {
         let inner = self.inner.get_atom(n)?.clone();
         PyAtom { inner }.into()
     }
+    
+    /// Add atom a into molecule. If Atom numbered as a already exists in
+    /// molecule, then the associated Atom will be updated with atom.
+    #[pyo3(text_signature = "($self, n, atom, /)")]
+    fn add_atom(&mut self, n: usize, atom: PyAtom) {
+        self.inner.add_atom(n, atom.inner)
+    }
+    
+    /// Remove Atom a from Molecule. Return the removed Atom on success,
+    /// and return None if Atom a does not exist.
+    #[pyo3(text_signature = "($self, n, /)")]
+    fn remove_atom(&mut self, n: usize) -> Option<PyAtom> {
+        let inner = self.inner.remove_atom(n)?;
+        PyAtom { inner }.into()
+    }
 
     /// Return a sub molecule induced by `atoms` in parent
     /// molecule. Return None if atom serial numbers are
@@ -482,6 +457,64 @@ impl PyMolecule {
     fn get_scaled_positions(&self) -> Option<Vec<[f64; 3]>> {
         let scaled = self.inner.get_scaled_positions()?.collect_vec();
         scaled.into()
+    }
+
+    /// Get the number of bonds.
+    fn nbonds(&self) -> usize {
+        self.inner.nbonds()
+    }
+    
+    /// Return the shortest distance counted in number of chemical
+    /// bonds between two atoms. Return None if they are not
+    /// connected.
+    fn nbonds_between(&self, i: usize, j: usize) -> PyResult<Option<usize>> {
+        let n = self.inner.nbonds_between(i, j);
+        Ok(n)
+    }
+    
+    /// Recalculates all bonds in molecule based on interatomic
+    /// distances and covalent radii. For periodic system, the bonds
+    /// are determined by applying miniumu image convention.
+    fn rebond(&mut self) {
+        self.inner.rebond();
+    }
+    
+    /// Removes all existing bonds between atoms.
+    fn unbound(&mut self) -> PyResult<()> {
+        self.inner.unbound();
+        Ok(())
+    }
+    
+    /// Removes all bonds between `atom_indices1` and `atom_indices2`
+    /// in respect of pymol's `unbond` command.
+    ///
+    /// # Parameters
+    /// * atom_indices1: the first collection of atoms
+    /// * atom_indices2: the other collection of atoms
+    ///
+    /// # Reference
+    /// * <https://pymolwiki.org/index.php/Unbond>
+    #[pyo3(text_signature = "($self, atom_indices1, atom_indices2, /)")]
+    fn unbond(&mut self, atom_indices1: Vec<usize>, atom_indices2: Vec<usize>) -> PyResult<()> {
+        self.inner.unbond(&atom_indices1, &atom_indices2);
+        Ok(())
+    }
+    
+    /// Add a single bond between Atom `i` and Atom `j` into molecule.
+    /// Panic if the specified atom a or b does not exist
+    #[pyo3(text_signature = "($self, i, j, /)")]
+    fn add_bond(&mut self, i: usize, j: usize) {
+        use gchemol::Bond;
+    
+        self.inner.add_bond(i, j, Bond::single())
+    }
+    
+    /// Remove the bond between atom `i` and atom `j`.
+    #[pyo3(text_signature = "($self, i, j, /)")]
+    fn remove_bond(&mut self, i: usize, j: usize) {
+        use gchemol::Bond;
+    
+        self.inner.remove_bond(i, j);
     }
 
     /// Break molecule into multiple fragments based on its bonding
