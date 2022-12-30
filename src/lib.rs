@@ -43,6 +43,7 @@ impl PyAtom {
         self.inner.position()
     }
 
+    /// Change atom Cartesian position to `p` ([x, y, z]).
     fn set_position(&mut self, p: [f64; 3]) {
         self.inner.set_position(p);
     }
@@ -430,12 +431,14 @@ impl PyMolecule {
     /// Return a sub molecule induced by `atoms` in parent
     /// molecule. Return None if atom serial numbers are
     /// invalid. Return an empty Molecule if `atoms` empty.
+    #[pyo3(text_signature = "($self, atoms)")]
     fn get_sub_molecule(&self, atoms: Vec<usize>) -> Option<Self> {
         let inner = self.inner.get_sub_molecule(&atoms)?;
         Self { inner }.into()
     }
 
     /// Set periodic lattice.
+    #[pyo3(text_signature = "($self, lat)")]
     fn set_lattice(&mut self, lat: PyLattice) {
         self.inner.set_lattice(lat.inner);
     }
@@ -480,29 +483,46 @@ impl PyMolecule {
     /// * The atoms must be in one-to-one mapping with atoms in `mol_ref`
     /// * The structure could be mirrored for better alignment.
     /// * Heavy atoms have more weights.
-    fn superimpose_onto(&mut self, mol_ref: Self) -> f64 {
+    #[pyo3(text_signature = "($self, mol_ref, /, selection = None)")]
+    fn superimpose_onto(&mut self, mol_ref: Self, selection: Option<Vec<usize>>) -> f64 {
         use gchemol::geom::prelude::*;
         use gchemol::geom::Superimpose;
     
-        let weights = mol_ref.inner.masses().collect_vec();
-        let positions_this = self.inner.positions().collect_vec();
-        let positions_prev = mol_ref.inner.positions().collect_vec();
+        let (positions_this, positions_prev, weights) = if let Some(selected) = selection {
+            let this = selected.iter().map(|&i| self.get_atom(i).unwrap().position()).collect_vec();
+            let prev = selected
+                .iter()
+                .map(|&i| mol_ref.get_atom(i).unwrap().position())
+                .collect_vec();
+            let weights = selected
+                .iter()
+                .map(|&i| self.get_atom(i).unwrap().get_mass().unwrap())
+                .collect_vec();
+            (this, prev, weights)
+        } else {
+            (
+                self.inner.positions().collect_vec(),
+                mol_ref.inner.positions().collect_vec(),
+                self.inner.masses().collect_vec(),
+            )
+        };
+        assert_eq!(positions_this.len(), positions_prev.len());
+        assert_eq!(positions_this.len(), weights.len());
         let sp1 = Superimpose::new(&positions_this).onto(&positions_prev, weights.as_slice().into());
         let mut positions_this_mirrored = positions_this.clone();
         positions_this_mirrored.mirror_invert();
         let sp2 = Superimpose::new(&positions_this_mirrored).onto(&positions_prev, weights.as_slice().into());
+        let positions_this_all = self.inner.positions().collect_vec();
         let (positions_new, rmsd) = if sp1.rmsd < sp2.rmsd {
-            (sp1.apply(&positions_this), sp1.rmsd)
+            (sp1.apply(&positions_this_all), sp1.rmsd)
         } else {
-            (sp2.apply(&positions_this_mirrored), sp2.rmsd)
+            let mut positions_this_all_mirrored = positions_this_all.clone();
+            positions_this_all_mirrored.mirror_invert();
+            (sp2.apply(&positions_this_all_mirrored), sp2.rmsd)
         };
     
         self.inner.set_positions(positions_new);
         rmsd
-    }
-    
-    fn superimpose_selection_onto(&mut self, selection: Vec<usize>, mol_ref: Self) -> f64 {
-        todo!()
     }
 
     fn educated_rebond(&mut self) {
