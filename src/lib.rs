@@ -420,6 +420,13 @@ impl PyMolecule {
         }
     }
 
+    /// Access the atom copy by atom serial number `n`. Return None if
+    /// serial number `n` invalid.
+    fn get_atom(&self, n: usize) -> Option<PyAtom> {
+        let inner = self.inner.get_atom(n)?.clone();
+        PyAtom { inner }.into()
+    }
+
     /// Return a sub molecule induced by `atoms` in parent
     /// molecule. Return None if atom serial numbers are
     /// invalid. Return an empty Molecule if `atoms` empty.
@@ -457,10 +464,20 @@ impl PyMolecule {
         self.inner.fragmented().map(|inner| Self { inner }).collect()
     }
     
+    /// Reorder the atoms according to the ordering of keys. Keys define
+    /// 1-to-1 mapping of atoms.
+    ///
+    /// # NOTE
+    /// * This method will cause serial numbers renumbered from 1.
+    fn reorder(&mut self, keys: Vec<usize>) {
+        self.inner.reorder(&keys);
+    }
+    
     /// Superimpose structure onto `mol_ref` which will be held fixed
     /// during alignment. Return superposition rmsd on done.
     ///
     /// # NOTE
+    /// * The atoms must be in one-to-one mapping with atoms in `mol_ref`
     /// * The structure could be mirrored for better alignment.
     /// * Heavy atoms have more weights.
     fn superimpose_onto(&mut self, mol_ref: Self) -> f64 {
@@ -482,6 +499,10 @@ impl PyMolecule {
     
         self.inner.set_positions(positions_new);
         rmsd
+    }
+    
+    fn superimpose_selection_onto(&mut self, selection: Vec<usize>, mol_ref: Self) -> f64 {
+        todo!()
     }
 
     fn educated_rebond(&mut self) {
