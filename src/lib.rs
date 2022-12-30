@@ -9,6 +9,7 @@ use gchemol::Atom;
 #[pyclass(name = "Atom")]
 #[derive(Clone)]
 /// Atom is the smallest particle still characterizing a chemical element.
+#[pyo3(text_signature = "(symbol, position)")]
 pub struct PyAtom {
     inner: Atom,
 }
@@ -44,6 +45,7 @@ impl PyAtom {
     }
 
     /// Change atom Cartesian position to `p` ([x, y, z]).
+    #[pyo3(text_signature = "($self, p, /)")]
     fn set_position(&mut self, p: [f64; 3]) {
         self.inner.set_position(p);
     }
@@ -69,8 +71,9 @@ impl PyAtom {
 use gchemol::Lattice;
 
 /// Periodic 3D lattice
-#[pyclass(name = "Lattice", subclass)]
 #[derive(Clone)]
+#[pyclass(name = "Lattice", subclass)]
+#[pyo3(text_signature = "(tvs)")]
 pub struct PyLattice {
     inner: Lattice,
 }
@@ -86,17 +89,20 @@ impl PyLattice {
 
     /// Construct lattice from lattice parameters Unit cell angles in degrees, lengths in Angstrom
     #[staticmethod]
+    #[pyo3(text_signature = "($self, a, b, c, alpha, beta, gamma, /)")]
     fn from_params(a: f64, b: f64, c: f64, alpha: f64, beta: f64, gamma: f64) -> Self {
         let inner = Lattice::from_params(a, b, c, alpha, beta, gamma);
         Self { inner }
     }
 
     /// Returns the fractional coordinates given cartesian coordinates.
+    #[pyo3(text_signature = "($self, p, /)")]
     fn to_frac(&self, p: [f64; 3]) -> [f64; 3] {
         self.inner.to_frac(p).into()
     }
 
     /// Returns the cartesian coordinates given fractional coordinates.
+    #[pyo3(text_signature = "($self, p, /)")]
     fn to_cart(&self, p: [f64; 3]) -> [f64; 3] {
         self.inner.to_cart(p).into()
     }
@@ -124,6 +130,7 @@ impl PyLattice {
     /// Return the shortest distance between pi (point i) and the
     /// periodic images of pj (point j) under the minimum image
     /// convention
+    #[pyo3(text_signature = "($self, pi, pj, /)")]
     fn distance(&self, pi: [f64; 3], pj: [f64; 3]) -> f64 {
         self.inner.distance(pi, pj).into()
     }
@@ -150,6 +157,7 @@ use gut::prelude::*;
 /// The main object featured in this library. This object represents a
 /// molecule, with atoms and bonds.
 #[pyclass(name = "Molecule", subclass)]
+#[pyo3(text_signature = "(title)")]
 #[derive(Clone)]
 pub struct PyMolecule {
     inner: Molecule,
@@ -160,6 +168,7 @@ impl PyMolecule {
     /// Construct `Molecule` object from a file `path`. If the file
     /// contains multiple molecules, only the last one will be read.
     #[staticmethod]
+    #[pyo3(text_signature = "($self, path, /)")]
     fn from_file(path: String) -> PyResult<Self> {
         let inner = Molecule::from_file(&path)?;
         // let instance = cls.call0()?;
@@ -182,6 +191,7 @@ impl PyMolecule {
 
     #[staticmethod]
     /// Build a molecule from atoms associated with serial numbers from 1.
+    #[pyo3(text_signature = "($self, atoms, /)")]
     fn from_atoms(atoms: Vec<PyAtom>) -> Self {
         let inner = Molecule::from_atoms(atoms.into_iter().map(|m| m.inner));
         Self { inner }
@@ -206,6 +216,7 @@ impl PyMolecule {
 
     /// Write molecule to file with `path`. The molecule format will
     /// be determined based on file name extension.
+    #[pyo3(text_signature = "($self, path, /)")]
     fn to_file(&self, path: String) -> PyResult<()> {
         self.inner.to_file(&path)?;
         Ok(())
@@ -213,6 +224,7 @@ impl PyMolecule {
 
     /// Render molecule with template file from `path`. On success,
     /// return the formatted string.
+    #[pyo3(text_signature = "($self, path, /)")]
     fn render_with(&self, path: String) -> PyResult<String> {
         let s = self.inner.render_with(path.as_ref())?;
         Ok(s)
@@ -254,6 +266,7 @@ impl PyMolecule {
     ///
     /// NOTE: padding has to be large enough (> 0.5) to avoid self
     /// interaction with its periodic mirror.
+    #[pyo3(text_signature = "($self, padding, /)")]
     fn set_lattice_from_bounding_box(&mut self, padding: f64) -> PyResult<()> {
         self.inner.set_lattice_from_bounding_box(padding);
         Ok(())
@@ -266,6 +279,7 @@ impl PyMolecule {
     /// * sa, sb, sc: an sequence of three scaling factors. E.g., [2,
     /// 1, 1] specifies that the supercell should have dimensions 2a x
     /// b x c
+    #[pyo3(text_signature = "($self, sa, sb, sc, /)")]
     fn supercell(&mut self, sa: usize, sb: usize, sc: usize) -> PyResult<Self> {
         if let Some(mol) = self.inner.supercell(sa, sb, sc) {
             let m = Self { inner: mol };
@@ -301,6 +315,7 @@ impl PyMolecule {
     ///
     /// * <https://pymolwiki.org/index.php/Unbond>
     ///
+    #[pyo3(text_signature = "($self, atom_indices1, atom_indices2, /)")]
     fn unbond(&mut self, atom_indices1: Vec<usize>, atom_indices2: Vec<usize>) -> PyResult<()> {
         self.inner.unbond(&atom_indices1, &atom_indices2);
         Ok(())
@@ -309,6 +324,7 @@ impl PyMolecule {
     /// Return the distance between atom i and atom j. For periodic
     /// structure, this method will return the distance under the
     /// minimum image convention.
+    #[pyo3(text_signature = "($self, i, j, /)")]
     fn distance(&self, i: usize, j: usize) -> PyResult<f64> {
         let d = self
             .inner
@@ -319,6 +335,7 @@ impl PyMolecule {
 
     /// Return the angle between atoms `i`, `j`, `k` in degrees,
     /// irrespective periodic images.
+    #[pyo3(text_signature = "($self, i, j, k, /)")]
     fn angle(&self, i: usize, j: usize, k: usize) -> PyResult<f64> {
         let d = self
             .inner
@@ -330,6 +347,7 @@ impl PyMolecule {
 
     /// Return the torsion angle between atoms `i`, `j`, `k`, `l` in
     /// degrees, irrespective periodic images.
+    #[pyo3(text_signature = "($self, i, j, k, l, /)")]
     fn torsion(&self, i: usize, j: usize, k: usize, l: usize) -> PyResult<f64> {
         let d = self
             .inner
@@ -359,6 +377,7 @@ impl PyMolecule {
 
     /// Set freezing flag to `freezed` for atom `sn` when in
     /// optimization or dynamic simulation.
+    #[pyo3(text_signature = "($self, sn, freezed, /)")]
     fn freeze_atom(&mut self, sn: usize, freezed: bool) -> PyResult<()> {
         if let Some(a) = self.inner.get_atom_mut(sn) {
             a.set_freezing([freezed; 3]);
@@ -370,6 +389,7 @@ impl PyMolecule {
 
     /// Get ONIOM layer of atom `sn`. If no layer information was set,
     /// will return `H`.
+    #[pyo3(text_signature = "($self, sn, /)")]
     fn get_oniom_layer(&self, sn: usize) -> PyResult<String> {
         use gchemol::io::formats::GaussianInputFile;
 
@@ -384,6 +404,7 @@ impl PyMolecule {
 
     /// Set ONIOM layer of atom `sn` to `layer` for Gaussian
     /// calculation. Possible layer includes `H`, `M`, `L`
+    #[pyo3(text_signature = "($self, sn, layer, /)")]
     fn set_oniom_layer(&mut self, sn: usize, layer: &str) -> PyResult<()> {
         use gchemol::io::formats::GaussianInputFile;
 
@@ -398,6 +419,7 @@ impl PyMolecule {
     }
 
     /// Find rings up to `nmax` atoms in `Molecule`.
+    #[pyo3(text_signature = "($self, namx, /)")]
     fn find_rings(&mut self, nmax: usize) -> PyResult<Vec<std::collections::HashSet<usize>>> {
         let rings = self.inner.find_rings(nmax);
         Ok(rings)
@@ -423,6 +445,7 @@ impl PyMolecule {
 
     /// Access the atom copy by atom serial number `n`. Return None if
     /// serial number `n` invalid.
+    #[pyo3(text_signature = "($self, n, /)")]
     fn get_atom(&self, n: usize) -> Option<PyAtom> {
         let inner = self.inner.get_atom(n)?.clone();
         PyAtom { inner }.into()
@@ -470,8 +493,12 @@ impl PyMolecule {
     /// Reorder the atoms according to the ordering of keys. Keys define
     /// 1-to-1 mapping of atoms.
     ///
+    /// # Parameters
+    /// * keys: a list of numbers for sorting
+    ///
     /// # NOTE
     /// * This method will cause serial numbers renumbered from 1.
+    #[pyo3(text_signature = "($self, keys, /)")]
     fn reorder(&mut self, keys: Vec<usize>) {
         self.inner.reorder(&keys);
     }
@@ -606,6 +633,8 @@ impl DgGraph {
 
 // [[file:../spdkit-python.note::c400da41][c400da41]]
 #[pyfunction]
+#[pyo3(text_signature = "(level)")]
+/// Enable logging by setting verbosity level to `level`.
 fn set_verbosity(level: u8) {
     let mut log = gut::cli::Verbosity::default();
     log.set_verbosity(level);
