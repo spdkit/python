@@ -695,6 +695,65 @@ use gchemol_parser::TextViewer;
 pub struct PyTextViewer {
     inner: TextViewer,
 }
+
+#[pymethods]
+impl PyTextViewer {
+    /// Create a `TextViewer` from text string in `s`.
+    #[staticmethod]
+    #[pyo3(text_signature = "($self, s)")]
+    pub fn from_string(s: String) -> Self {
+        let inner = TextViewer::from_str(&s);
+        Self { inner }
+    }
+
+    /// Return total number of lines.
+    pub fn num_lines(&self) -> usize {
+        self.inner.num_lines()
+    }
+
+    /// Get line number at cursor.
+    pub fn current_line_num(&self) -> usize {
+        self.inner.current_line_num()
+    }
+
+    /// Return the line at cursor.
+    pub fn current_line(&self) -> String {
+        self.inner.current_line().to_owned()
+    }
+
+    /// Move the cursor to line `n`, counting from line 1 at beginning
+    /// of the text.
+    #[pyo3(text_signature = "($self, n)")]
+    pub fn goto_line(&mut self, n: usize) {
+        self.inner.goto_line(n);
+    }
+
+    /// Move the cursor to the line matching `pattern`. Regex pattern
+    /// is allowed.
+    #[pyo3(text_signature = "($self, pattern)")]
+    pub fn search_forward(&mut self, pattern: String) -> PyResult<usize> {
+        let n = self.inner.search_forward(&pattern)?;
+        Ok(n)
+    }
+
+    /// Peek line `n`.
+    #[pyo3(text_signature = "($self, n)")]
+    pub fn peek_line(&self, n: usize) -> String {
+        self.inner.peek_line(n).to_owned()
+    }
+
+    /// Peek the text between line `n` and `m` (including line `m`)
+    #[pyo3(text_signature = "($self, n, m)")]
+    pub fn peek_lines(&self, n: usize, m: usize) -> String {
+        self.inner.peek_lines(n, m).to_owned()
+    }
+
+    /// Return the part in a rectangular area of text
+    #[pyo3(text_signature = "($self, line_beg, line_end, col_beg, col_end)")]
+    pub fn column_selection(&self, line_beg: usize, line_end: usize, col_beg: usize, col_end: usize) -> String {
+        self.inner.column_selection(line_beg, line_end, col_beg, col_end)
+    }
+}
 // 6144a4ef ends here
 
 // [[file:../spdkit-python.note::c400da41][c400da41]]
