@@ -685,77 +685,6 @@ impl DgGraph {
 }
 // df84f7ba ends here
 
-// [[file:../spdkit-python.note::6144a4ef][6144a4ef]]
-use gchemol_parser::TextViewer;
-
-/// Represents a graph object for refinement of molecule structure
-/// using distance geometry algorithm.
-#[pyclass(name = "TextViwer", subclass)]
-#[derive(Clone)]
-pub struct PyTextViewer {
-    inner: TextViewer,
-}
-
-#[pymethods]
-impl PyTextViewer {
-    /// Create a `TextViewer` from text string in `s`.
-    #[staticmethod]
-    #[pyo3(text_signature = "($self, s)")]
-    pub fn from_string(s: String) -> Self {
-        let inner = TextViewer::from_str(&s);
-        Self { inner }
-    }
-
-    /// Return total number of lines.
-    pub fn num_lines(&self) -> usize {
-        self.inner.num_lines()
-    }
-
-    /// Get line number at cursor.
-    pub fn current_line_num(&self) -> usize {
-        self.inner.current_line_num()
-    }
-
-    /// Return the line at cursor.
-    pub fn current_line(&self) -> String {
-        self.inner.current_line().to_owned()
-    }
-
-    /// Move the cursor to line `n`, counting from line 1 at beginning
-    /// of the text.
-    #[pyo3(text_signature = "($self, n)")]
-    pub fn goto_line(&mut self, n: usize) {
-        self.inner.goto_line(n);
-    }
-
-    /// Move the cursor to the line matching `pattern`. Regex pattern
-    /// is allowed.
-    #[pyo3(text_signature = "($self, pattern)")]
-    pub fn search_forward(&mut self, pattern: String) -> PyResult<usize> {
-        let n = self.inner.search_forward(&pattern)?;
-        Ok(n)
-    }
-
-    /// Peek line `n`.
-    #[pyo3(text_signature = "($self, n)")]
-    pub fn peek_line(&self, n: usize) -> String {
-        self.inner.peek_line(n).to_owned()
-    }
-
-    /// Peek the text between line `n` and `m` (including line `m`)
-    #[pyo3(text_signature = "($self, n, m)")]
-    pub fn peek_lines(&self, n: usize, m: usize) -> String {
-        self.inner.peek_lines(n, m).to_owned()
-    }
-
-    /// Return the part in a rectangular area of text
-    #[pyo3(text_signature = "($self, line_beg, line_end, col_beg, col_end)")]
-    pub fn column_selection(&self, line_beg: usize, line_end: usize, col_beg: usize, col_end: usize) -> String {
-        self.inner.column_selection(line_beg, line_end, col_beg, col_end)
-    }
-}
-// 6144a4ef ends here
-
 // [[file:../spdkit-python.note::7ff1511e][7ff1511e]]
 use gchemol_parser::GrepReader;
 
@@ -809,16 +738,16 @@ impl PyGrepReader {
     /// out of range.
     pub fn goto_marker(&mut self, marker_index: isize) -> PyResult<u64> {
         let i = if marker_index < 0 {
-            self.inner.num_markers() + marker_index
+            self.inner.num_markers() as isize + marker_index
         } else {
             marker_index
         };
-        let n = self.inner.goto_marker(i)?;
+        let n = self.inner.goto_marker(i as usize)?;
         Ok(n)
     }
 
-    /// Return `n` lines in string on success. Return error if reached
-    /// EOF early.
+    /// Return `n` lines in string on success from current
+    /// position. Return error if reached EOF early.
     pub fn read_lines(&mut self, n: usize) -> PyResult<String> {
         let mut s = String::new();
         self.inner.read_lines(n, &mut s)?;
@@ -892,7 +821,7 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
 
     let io = PyModule::new(py, "io")?;
     io.add_function(wrap_pyfunction!(read, io)?)?;
-    io.add_class::<PyTextViewer>()?;
+    // io.add_class::<PyTextViewer>()?;
     io.add_class::<PyGrepReader>()?;
     m.add_submodule(io)?;
 
