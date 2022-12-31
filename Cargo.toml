@@ -15,6 +15,7 @@ spdkit = { version = "0.1" }
 educate = { version = "0.1", features = ["adhoc"] }
 distances = { version = "0.1", features = ["adhoc"] }
 gchemol = { version = "0.1", features = ["adhoc"] }
+gchemol-parser = { version = "0.3", features = ["adhoc"] }
 
 [dev-dependencies]
 criterion = "0.4"
