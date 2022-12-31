@@ -707,9 +707,9 @@ impl PyGrepReader {
 
     /// Mark positions that matching pattern, so that we can seek these
     /// positions later. Return the number of marked positions.
-    #[pyo3(text_signature = "($self, [pattern_a, pattern_b, ...])")]
-    pub fn mark(&mut self, patterns: Vec<String>) -> PyResult<usize> {
-        let n = self.inner.mark(&patterns)?;
+    #[pyo3(text_signature = "($self, pattern, max_count = None)")]
+    pub fn mark(&mut self, pattern: String, max_count: Option<usize>) -> PyResult<usize> {
+        let n = self.inner.mark(&pattern, max_count)?;
         Ok(n)
     }
 
