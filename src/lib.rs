@@ -690,7 +690,7 @@ use gchemol_parser::TextViewer;
 
 /// Represents a graph object for refinement of molecule structure
 /// using distance geometry algorithm.
-#[pyclass(name = "TexTViwer", subclass)]
+#[pyclass(name = "TextViwer", subclass)]
 #[derive(Clone)]
 pub struct PyTextViewer {
     inner: TextViewer,
@@ -755,6 +755,77 @@ impl PyTextViewer {
     }
 }
 // 6144a4ef ends here
+
+// [[file:../spdkit-python.note::7ff1511e][7ff1511e]]
+use gchemol_parser::GrepReader;
+
+/// Quick grep text by marking the line that matching a pattern,
+/// suitable for very large text file.
+#[pyclass(name = "GrepReader", subclass)]
+pub struct PyGrepReader {
+    inner: GrepReader,
+}
+
+#[pymethods]
+impl PyGrepReader {
+    /// Create a `GrepReader` from file in `path`.
+    #[staticmethod]
+    #[pyo3(text_signature = "($self, path)")]
+    pub fn from_file(path: String) -> PyResult<Self> {
+        let inner = GrepReader::try_from_path(path.as_ref())?;
+        Ok(Self { inner })
+    }
+
+    /// Mark positions that matching pattern, so that we can seek these
+    /// positions later. Return the number of marked positions.
+    #[pyo3(text_signature = "($self, [pattern_a, pattern_b, ...])")]
+    pub fn mark(&mut self, patterns: Vec<String>) -> PyResult<usize> {
+        let n = self.inner.mark(&patterns)?;
+        Ok(n)
+    }
+
+    /// Goto the start of the inner file.
+    pub fn goto_start(&mut self) {
+        self.inner.goto_start();
+    }
+    /// Goto the end of the inner file.
+    pub fn goto_end(&mut self) {
+        self.inner.goto_end();
+    }
+
+    /// Return the number of marked positions
+    pub fn num_markers(&self) -> usize {
+        self.inner.num_markers()
+    }
+
+    /// Goto the next position that marked. Return marker position on success.
+    /// Return Err if already reached the last marker or other errors.
+    pub fn goto_next_marker(&mut self) -> PyResult<u64> {
+        let n = self.inner.goto_next_marker()?;
+        Ok(n)
+    }
+
+    /// Goto the marked position in `marker_index`. Will panic if marker_index
+    /// out of range.
+    pub fn goto_marker(&mut self, marker_index: isize) -> PyResult<u64> {
+        let i = if marker_index < 0 {
+            self.inner.num_markers() + marker_index
+        } else {
+            marker_index
+        };
+        let n = self.inner.goto_marker(i)?;
+        Ok(n)
+    }
+
+    /// Return `n` lines in string on success. Return error if reached
+    /// EOF early.
+    pub fn read_lines(&mut self, n: usize) -> PyResult<String> {
+        let mut s = String::new();
+        self.inner.read_lines(n, &mut s)?;
+        Ok(s)
+    }
+}
+// 7ff1511e ends here
 
 // [[file:../spdkit-python.note::c400da41][c400da41]]
 #[pyfunction]
@@ -822,6 +893,7 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     let io = PyModule::new(py, "io")?;
     io.add_function(wrap_pyfunction!(read, io)?)?;
     io.add_class::<PyTextViewer>()?;
+    io.add_class::<PyGrepReader>()?;
     m.add_submodule(io)?;
 
     Ok(())
