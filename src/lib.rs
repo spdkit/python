@@ -919,16 +919,27 @@ impl PyMoleculeIter {
         slf.iter.next()
     }
 }
+// a31e85a4 ends here
 
+// [[file:../spdkit-python.note::b8744829][b8744829]]
 #[pyfunction]
 /// Read a list of `Molecule` from `path`. Returns an iterator over
 /// `Molecule`, which allows reading a large file out of memory.
+#[pyo3(text_signature = "(path: String)")]
 pub fn read(path: String) -> PyResult<PyMoleculeIter> {
     let mols = gchemol::io::read(path)?.map(|inner| PyMolecule { inner });
     let mols = PyMoleculeIter { iter: Box::new(mols) };
     Ok(mols)
 }
-// a31e85a4 ends here
+
+#[pyfunction]
+/// Write molecules into path. File format will be determined according to the path.
+#[pyo3(text_signature = "(path: String, mols: List[Molecule])")]
+pub fn write(path: String, mols: Vec<PyMolecule>) -> PyResult<()> {
+    gchemol::io::write(path, mols.iter().map(|mol| &mol.inner))?;
+    Ok(())
+}
+// b8744829 ends here
 
 // [[file:../spdkit-python.note::fbe87af8][fbe87af8]]
 #[pymodule]
@@ -942,6 +953,7 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
 
     let io = PyModule::new(py, "io")?;
     io.add_function(wrap_pyfunction!(read, io)?)?;
+    io.add_function(wrap_pyfunction!(write, io)?)?;
     io.add_class::<PyTextViewer>()?;
     io.add_class::<PyGrepReader>()?;
     m.add_submodule(io)?;
