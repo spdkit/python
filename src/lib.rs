@@ -183,6 +183,12 @@ impl PyMolecule {
         self.inner.title()
     }
 
+    /// Set molecule's title to `title`.
+    #[pyo3(text_signature = "($self, title: String)")]
+    pub fn set_title(&mut self, title: String) {
+        self.inner.set_title(&title);
+    }
+
     #[staticmethod]
     /// Build a molecule from atoms associated with serial numbers from 1.
     #[pyo3(text_signature = "($self, atoms, /)")]
