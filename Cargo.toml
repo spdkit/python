@@ -16,6 +16,7 @@ educate = { version = "0.1", features = ["adhoc"] }
 distances = { version = "0.1", features = ["adhoc"] }
 gchemol = { version = "0.1", features = ["adhoc"] }
 gchemol-parser = { version = "0.4", features = ["adhoc"] }
+plotly = "0.8.3"
 
 [dev-dependencies]
 criterion = "0.4"

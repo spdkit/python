@@ -947,6 +947,67 @@ pub fn write(path: String, mols: Vec<PyMolecule>) -> PyResult<()> {
 }
 // b8744829 ends here
 
+// [[file:../spdkit-python.note::fcc83408][fcc83408]]
+fn plot_3d(z: Vec<Vec<f64>>, x: Vec<f64>, y: Vec<f64>) {
+    use plotly::layout::Axis;
+    use plotly::*;
+
+    let mut plot = Plot::new();
+
+    let trace1 = Surface::new(z).x(x).y(y).cauto(false);
+    plot.add_trace(trace1);
+    plot.show();
+}
+
+#[pyclass]
+#[derive(Debug, Default)]
+struct OptimizationTrajactory {
+    energy: Vec<f64>,
+    fmax: Vec<f64>,
+}
+
+#[pymethods]
+impl OptimizationTrajactory {
+    #[new]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Append an image data in `energy` for total energy and `fmax`
+    /// for max force.
+    pub fn append_data(&mut self, energy: f64, fmax: f64) {
+        self.energy.push(energy);
+        self.fmax.push(fmax);
+    }
+
+    /// Plot using plotly and write html file in `path`.
+    pub fn plot(&self, path: String) {
+        use plotly::common::{AxisSide, Mode};
+        use plotly::layout::Axis;
+        use plotly::{Layout, Plot, Scatter};
+
+        let n = self.energy.len();
+        let x = (0..n).collect_vec();
+        let y = self.energy.clone();
+        let trace1 = Scatter::new(x.clone(), y).name("energy").mode(Mode::Lines).y_axis("y1");
+        let y = self.fmax.clone();
+        let trace2 = Scatter::new(x.clone(), y).name("fmax").mode(Mode::Lines).y_axis("y2");
+        let mut plot = Plot::new();
+        plot.add_trace(trace1);
+        plot.add_trace(trace2);
+        let layout = Layout::new()
+            .y_axis2(Axis::new().side(AxisSide::Right).overlaying("y"))
+            .title("<b>Optimization trajectory</b>".into());
+        plot.set_layout(layout);
+
+        plot.use_local_plotly();
+        plot.write_html(&path);
+
+        info!("plot was wrote to {path}");
+    }
+}
+// fcc83408 ends here
+
 // [[file:../spdkit-python.note::fbe87af8][fbe87af8]]
 #[pymodule]
 #[pyo3(name = "spdkit")]
@@ -962,6 +1023,7 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     io.add_function(wrap_pyfunction!(write, io)?)?;
     io.add_class::<PyTextViewer>()?;
     io.add_class::<PyGrepReader>()?;
+    io.add_class::<OptimizationTrajactory>()?;
     m.add_submodule(io)?;
 
     Ok(())
