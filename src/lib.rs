@@ -931,16 +931,16 @@ impl PyMoleculeIter {
 #[pyfunction]
 /// Read a list of `Molecule` from `path`. Returns an iterator over
 /// `Molecule`, which allows reading a large file out of memory.
-#[pyo3(text_signature = "(path: String)")]
+#[pyo3(text_signature = "(path)")]
 pub fn read(path: String) -> PyResult<PyMoleculeIter> {
     let mols = gchemol::io::read(path)?.map(|inner| PyMolecule { inner });
     let mols = PyMoleculeIter { iter: Box::new(mols) };
     Ok(mols)
 }
 
-#[pyfunction]
 /// Write molecules into path. File format will be determined according to the path.
-#[pyo3(text_signature = "(path: String, mols: List[Molecule])")]
+#[pyfunction]
+#[pyo3(text_signature = "(path, mols)")]
 pub fn write(path: String, mols: Vec<PyMolecule>) -> PyResult<()> {
     gchemol::io::write(path, mols.iter().map(|mol| &mol.inner))?;
     Ok(())
