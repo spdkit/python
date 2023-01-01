@@ -688,8 +688,7 @@ impl DgGraph {
 // [[file:../spdkit-python.note::6144a4ef][6144a4ef]]
 use gchemol_parser::TextViewer;
 
-/// Represents a graph object for refinement of molecule structure
-/// using distance geometry algorithm.
+/// A simple line-based text viewer for quick peeking part of text
 #[pyclass(name = "TextViwer", subclass)]
 #[derive(Clone)]
 pub struct PyTextViewer {
@@ -716,6 +715,11 @@ impl PyTextViewer {
         self.inner.current_line_num()
     }
 
+    /// Return all the text.
+    pub fn text(&self) -> String {
+        self.inner.text().to_owned()
+    }
+
     /// Return the line at cursor.
     pub fn current_line(&self) -> String {
         self.inner.current_line().to_owned()
@@ -728,11 +732,39 @@ impl PyTextViewer {
         self.inner.goto_line(n);
     }
 
+    /// Move the cursor to the beginning of the previous line.
+    pub fn goto_previous_line(&mut self) {
+        self.inner.goto_previous_line();
+    }
+
+    /// Move the cursor to the beginning of the next line.
+    pub fn goto_next_line(&mut self) {
+        self.inner.goto_next_line();
+    }
+
+    /// Move the cursor to the beginning of the last line.
+    pub fn goto_last_line(&mut self) {
+        self.inner.goto_last_line();
+    }
+
+    /// Move the cursor to the beginning of the first line.
+    pub fn goto_first_line(&mut self) {
+        self.inner.goto_first_line();
+    }
+
     /// Move the cursor to the line matching `pattern`. Regex pattern
     /// is allowed.
     #[pyo3(text_signature = "($self, pattern)")]
     pub fn search_forward(&mut self, pattern: String) -> PyResult<usize> {
         let n = self.inner.search_forward(&pattern)?;
+        Ok(n)
+    }
+
+    /// Search backward from current point for `pattern`. Return
+    /// current point after search.
+    #[pyo3(text_signature = "($self, pattern)")]
+    pub fn search_backward(&mut self, pattern: String) -> PyResult<usize> {
+        let n = self.inner.search_backward(&pattern)?;
         Ok(n)
     }
 
@@ -748,10 +780,18 @@ impl PyTextViewer {
         self.inner.peek_lines(n, m).to_owned()
     }
 
-    /// Return the part in a rectangular area of text
-    #[pyo3(text_signature = "($self, line_beg, line_end, col_beg, col_end)")]
-    pub fn column_selection(&self, line_beg: usize, line_end: usize, col_beg: usize, col_end: usize) -> String {
-        self.inner.column_selection(line_beg, line_end, col_beg, col_end)
+    /// Select the next `n` lines from current point, including current line.
+    #[pyo3(text_signature = "($self, n)")]
+    pub fn selection(&self, n: usize) -> String {
+        self.inner.selection(n).to_owned()
+    }
+
+    /// Select part of the string in next `n` lines (including
+    /// currrent line), in a rectangular area surrounded by columns in
+    /// `col_beg`--`col_end`.
+    #[pyo3(text_signature = "($self, n, col_beg, col_end)")]
+    pub fn column_selection(&self, n: usize, col_beg: usize, col_end: usize) -> String {
+        self.inner.column_selection(n, col_beg, col_end)
     }
 }
 // 6144a4ef ends here
@@ -902,7 +942,7 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
 
     let io = PyModule::new(py, "io")?;
     io.add_function(wrap_pyfunction!(read, io)?)?;
-    // io.add_class::<PyTextViewer>()?;
+    io.add_class::<PyTextViewer>()?;
     io.add_class::<PyGrepReader>()?;
     m.add_submodule(io)?;
 
