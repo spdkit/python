@@ -1005,6 +1005,27 @@ impl OptimizationTrajactory {
 
         info!("plot was wrote to {path}");
     }
+
+    /// Return string for pretty printing table.
+    pub fn table(&self) -> String {
+        use tabled::TableIteratorExt;
+        use tabled::{Style, Table, Tabled};
+
+        #[derive(Tabled)]
+        struct OptHist {
+            step: usize,
+            energy: f64,
+            fmax: f64,
+        }
+
+        let hist = self.energy.iter().zip(&self.fmax).enumerate().map(|(i, (e, f))| OptHist {
+            step: i,
+            energy: *e,
+            fmax: *f,
+        });
+
+        Table::new(hist).with(Style::markdown()).to_string()
+    }
 }
 // fcc83408 ends here
 
