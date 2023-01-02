@@ -1059,6 +1059,7 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyAtom>()?;
     m.add_class::<PyLattice>()?;
     m.add_function(wrap_pyfunction!(set_verbosity, m)?)?;
+    m.add_function(wrap_pyfunction!(parse_numbers_human_readable, m)?)?;
 
     let io = PyModule::new(py, "io")?;
     io.add_function(wrap_pyfunction!(read, io)?)?;
