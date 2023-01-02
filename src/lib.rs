@@ -684,7 +684,14 @@ impl DgGraph {
         self.inner.distance_weight(i, j)
     }
 
+    /// Constrain pairwise distances of atoms `selection` in Molecule `mol`.
+    #[pyo3(text_signature = "($self, mol, selection)")]
+    pub fn constrain_distances_within(&mut self, mol: PyMolecule, selection: Vec<usize>) {
+        self.inner.constrain_distances_within(&mol.inner, &selection, 10.0);
+    }
+
     /// Refine molecule structure `mol` using distance geometry.
+    #[pyo3(text_signature = "($self, mol)")]
     pub fn refine_molecule(&mut self, mol: &mut PyMolecule) {
         self.inner.refine_molecule(&mut mol.inner);
     }
@@ -891,6 +898,20 @@ pub fn set_verbosity(level: u8) {
     let mut log = gut::cli::Verbosity::default();
     log.set_verbosity(level);
     log.setup_logger();
+}
+
+/// Parse a list of numbers from a readable string `s`.
+///
+/// "2-5"   ==> [2, 3, 4, 5]
+/// "1,3-5" ==> [1, 3, 4, 5]
+/// "1 3,5" ==> [1, 3, 4, 5]
+#[pyfunction]
+#[pyo3(text_signature = "(s)")]
+pub fn parse_numbers_human_readable(s: String) -> Result<Vec<usize>> {
+    use gut::utils::parse_numbers_human_readable;
+
+    let selected = parse_numbers_human_readable(&s)?;
+    Ok(selected)
 }
 // c400da41 ends here
 
