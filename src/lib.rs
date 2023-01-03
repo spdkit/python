@@ -154,6 +154,53 @@ impl PyLattice {
 }
 // c8807c91 ends here
 
+// [[file:../spdkit-python.note::c400da41][c400da41]]
+#[pyfunction]
+#[pyo3(text_signature = "(level)")]
+/// Enable logging by setting verbosity level to `level`.
+pub fn set_verbosity(level: u8) {
+    let mut log = gut::cli::Verbosity::default();
+    log.set_verbosity(level);
+    log.setup_logger();
+}
+
+/// Parse a list of numbers from a readable string `s`.
+///
+/// "2-5"   ==> [2, 3, 4, 5]
+/// "1,3-5" ==> [1, 3, 4, 5]
+/// "1 3,5" ==> [1, 3, 4, 5]
+#[pyfunction]
+#[pyo3(text_signature = "(s)")]
+pub fn parse_numbers_human_readable(s: String) -> Result<Vec<usize>> {
+    use gut::utils::parse_numbers_human_readable;
+
+    let selected = parse_numbers_human_readable(&s)?;
+    Ok(selected)
+}
+
+#[derive(FromPyObject)]
+pub enum Selection {
+    #[pyo3(transparent, annotation = "list")]
+    List(Vec<usize>),
+    #[pyo3(transparent, annotation = "str")]
+    String(String),
+}
+
+impl Selection {
+    fn try_into_list(self) -> Result<Vec<usize>> {
+        let selection = match self {
+            Selection::List(sel) => sel,
+            Selection::String(s) => {
+                let sel = gut::utils::parse_numbers_human_readable(&s)?;
+                info!("parsed user selection: {sel:?}");
+                sel
+            }
+        };
+        Ok(selection)
+    }
+}
+// c400da41 ends here
+
 // [[file:../spdkit-python.note::969a9313][969a9313]]
 use gchemol::prelude::*;
 use gchemol::Molecule;
@@ -329,16 +376,18 @@ impl PyMolecule {
         Ok(cog)
     }
 
-    /// Set freezing flag to `freezed` for atom `sn` when in
-    /// optimization or dynamic simulation.
-    #[pyo3(text_signature = "($self, sn, freezed, /)")]
-    pub fn freeze_atom(&mut self, sn: usize, freezed: bool) -> PyResult<()> {
-        if let Some(a) = self.inner.get_atom_mut(sn) {
-            a.set_freezing([freezed; 3]);
-            Ok(())
-        } else {
-            Err(pyo3::exceptions::PyException::new_err("atom {sn} not found"))
+    /// Set freezing flag to `freezed` for atoms in `selection`,
+    /// useful for optimization or dynamic simulation.
+    #[pyo3(text_signature = "($self, selection, freezed, /)")]
+    pub fn freeze_atoms(&mut self, selection: Selection, freezed: bool) -> PyResult<()> {
+        for sn in selection.try_into_list()? {
+            if let Some(a) = self.inner.get_atom_mut(sn) {
+                a.set_freezing([freezed; 3]);
+            } else {
+                return Err(pyo3::exceptions::PyException::new_err("atom {sn} not found"));
+            }
         }
+        Ok(())
     }
 
     /// Get ONIOM layer of atom `sn`. If no layer information was set,
@@ -419,12 +468,26 @@ impl PyMolecule {
         let inner = self.inner.remove_atom(n)?;
         PyAtom { inner }.into()
     }
+    
+    /// Remove atoms in `selection` from Molecule. Return the removed
+    /// atoms on success, and return None if any atom does not exist.
+    #[pyo3(text_signature = "($self, selection, /)")]
+    pub fn remove_atoms(&mut self, selection: Selection) -> Option<Vec<PyAtom>> {
+        let mut removed = vec![];
+        for n in selection.try_into_list().ok()? {
+            let inner = self.inner.remove_atom(n)?;
+            let a = PyAtom { inner };
+            removed.push(a);
+        }
+        Some(removed)
+    }
 
     /// Return a sub molecule induced by `atoms` in parent
     /// molecule. Return None if atom serial numbers are
     /// invalid. Return an empty Molecule if `atoms` empty.
     #[pyo3(text_signature = "($self, atoms)")]
-    pub fn get_sub_molecule(&self, atoms: Vec<usize>) -> Option<Self> {
+    pub fn get_sub_molecule(&self, atoms: Selection) -> Option<Self> {
+        let atoms = atoms.try_into_list().ok()?;
         let inner = self.inner.get_sub_molecule(&atoms)?;
         Self { inner }.into()
     }
@@ -479,17 +542,19 @@ impl PyMolecule {
         Ok(())
     }
     
-    /// Removes all bonds between `atom_indices1` and `atom_indices2`
+    /// Removes all bonds between atoms in `selection1` and `selection2`,
     /// in respect of pymol's `unbond` command.
     ///
     /// # Parameters
-    /// * atom_indices1: the first collection of atoms
-    /// * atom_indices2: the other collection of atoms
+    /// * selection1: the first collection of atoms
+    /// * selection2: the other collection of atoms
     ///
     /// # Reference
     /// * <https://pymolwiki.org/index.php/Unbond>
-    #[pyo3(text_signature = "($self, atom_indices1, atom_indices2, /)")]
-    pub fn unbond(&mut self, atom_indices1: Vec<usize>, atom_indices2: Vec<usize>) -> PyResult<()> {
+    #[pyo3(text_signature = "($self, selection1, selection2, /)")]
+    pub fn unbond(&mut self, selection1: Selection, selection2: Selection) -> PyResult<()> {
+        let atom_indices1 = selection1.try_into_list()?;
+        let atom_indices2 = selection2.try_into_list()?;
         self.inner.unbond(&atom_indices1, &atom_indices2);
         Ok(())
     }
@@ -544,11 +609,12 @@ impl PyMolecule {
     /// * The structure could be mirrored for better alignment.
     /// * Heavy atoms have more weights.
     #[pyo3(text_signature = "($self, mol_ref, /, selection = None)")]
-    pub fn superimpose_onto(&mut self, mol_ref: Self, selection: Option<Vec<usize>>) -> f64 {
+    pub fn superimpose_onto(&mut self, mol_ref: Self, selection: Option<Selection>) -> PyResult<f64> {
         use gchemol::geom::prelude::*;
         use gchemol::geom::Superimpose;
     
         let (positions_this, positions_prev, weights) = if let Some(selected) = selection {
+            let selected = selected.try_into_list()?;
             let this = selected.iter().map(|&i| self.get_atom(i).unwrap().position()).collect_vec();
             let prev = selected
                 .iter()
@@ -582,7 +648,7 @@ impl PyMolecule {
         };
     
         self.inner.set_positions(positions_new);
-        rmsd
+        Ok(rmsd)
     }
 
     pub fn educated_rebond(&mut self) {
@@ -595,9 +661,11 @@ impl PyMolecule {
         self.inner.educated_clean();
     }
     
-    pub fn educated_clean_selection(&mut self, selection: Vec<usize>) {
+    pub fn educated_clean_selection(&mut self, selection: Selection) -> PyResult<()> {
         use educate::prelude::*;
+        let selection = selection.try_into_list()?;
         self.inner.educated_clean_selection(&selection);
+        Ok(())
     }
     
     /// Return unique fingerprint of current molecule
@@ -650,53 +718,38 @@ impl PyMolecule {
 }
 // 969a9313 ends here
 
-// [[file:../spdkit-python.note::df84f7ba][df84f7ba]]
-use distances::prelude::*;
-
-/// Represents a graph object for refinement of molecule structure
-/// using distance geometry algorithm.
-#[pyclass(mapping, module = "spdkit", subclass)]
-#[derive(Clone)]
-pub struct DgGraph {
-    inner: distances::DgGraph,
+// [[file:../spdkit-python.note::a31e85a4][a31e85a4]]
+#[pyclass]
+pub struct PyAtomsIter {
+    inner: std::vec::IntoIter<(usize, PyAtom)>,
 }
 
 #[pymethods]
-impl DgGraph {
-    /// Set weight for atom `i` and `j` for refinement of molecule structure.
-    pub fn set_distance_weight(&mut self, i: usize, j: usize, w: f64) {
-        self.inner.set_distance_weight(i, j, w);
+impl PyAtomsIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
     }
 
-    /// Set distance bound (lower/upper) for atom `i` and `j` for
-    /// refinement of molecule structure.
-    pub fn set_distance_bound(&mut self, i: usize, j: usize, lb: f64, ub: f64) {
-        self.inner.set_distance_bound(i, j, lb, ub);
-    }
-
-    /// Returns distance bound (lower/upper) for atom `i` and `j`.
-    pub fn get_distance_bound(&self, i: usize, j: usize) -> (f64, f64) {
-        self.inner.distance_bound(i, j)
-    }
-
-    /// Returns distance weight for atom `i` and `j`.
-    pub fn get_distance_weight(&self, i: usize, j: usize) -> f64 {
-        self.inner.distance_weight(i, j)
-    }
-
-    /// Constrain pairwise distances of atoms `selection` in Molecule `mol`.
-    #[pyo3(text_signature = "($self, mol, selection)")]
-    pub fn constrain_distances_within(&mut self, mol: PyMolecule, selection: Vec<usize>) {
-        self.inner.constrain_distances_within(&mol.inner, &selection, 10.0);
-    }
-
-    /// Refine molecule structure `mol` using distance geometry.
-    #[pyo3(text_signature = "($self, mol)")]
-    pub fn refine_molecule(&mut self, mol: &mut PyMolecule) {
-        self.inner.refine_molecule(&mut mol.inner);
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<(usize, PyAtom)> {
+        slf.inner.next()
     }
 }
-// df84f7ba ends here
+
+#[pyclass]
+pub struct PyMoleculeIter {
+    iter: Box<dyn Iterator<Item = PyMolecule> + Send>,
+}
+
+#[pymethods]
+impl PyMoleculeIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<PyMolecule> {
+        slf.iter.next()
+    }
+}
+// a31e85a4 ends here
 
 // [[file:../spdkit-python.note::6144a4ef][6144a4ef]]
 use gchemol_parser::TextViewer;
@@ -890,64 +943,6 @@ impl PyGrepReader {
 }
 // 7ff1511e ends here
 
-// [[file:../spdkit-python.note::c400da41][c400da41]]
-#[pyfunction]
-#[pyo3(text_signature = "(level)")]
-/// Enable logging by setting verbosity level to `level`.
-pub fn set_verbosity(level: u8) {
-    let mut log = gut::cli::Verbosity::default();
-    log.set_verbosity(level);
-    log.setup_logger();
-}
-
-/// Parse a list of numbers from a readable string `s`.
-///
-/// "2-5"   ==> [2, 3, 4, 5]
-/// "1,3-5" ==> [1, 3, 4, 5]
-/// "1 3,5" ==> [1, 3, 4, 5]
-#[pyfunction]
-#[pyo3(text_signature = "(s)")]
-pub fn parse_numbers_human_readable(s: String) -> Result<Vec<usize>> {
-    use gut::utils::parse_numbers_human_readable;
-
-    let selected = parse_numbers_human_readable(&s)?;
-    Ok(selected)
-}
-// c400da41 ends here
-
-// [[file:../spdkit-python.note::a31e85a4][a31e85a4]]
-#[pyclass]
-pub struct PyAtomsIter {
-    inner: std::vec::IntoIter<(usize, PyAtom)>,
-}
-
-#[pymethods]
-impl PyAtomsIter {
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
-
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<(usize, PyAtom)> {
-        slf.inner.next()
-    }
-}
-
-#[pyclass]
-pub struct PyMoleculeIter {
-    iter: Box<dyn Iterator<Item = PyMolecule> + Send>,
-}
-
-#[pymethods]
-impl PyMoleculeIter {
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<PyMolecule> {
-        slf.iter.next()
-    }
-}
-// a31e85a4 ends here
-
 // [[file:../spdkit-python.note::b8744829][b8744829]]
 #[pyfunction]
 /// Read a list of `Molecule` from `path`. Returns an iterator over
@@ -967,6 +962,56 @@ pub fn write(path: String, mols: Vec<PyMolecule>) -> PyResult<()> {
     Ok(())
 }
 // b8744829 ends here
+
+// [[file:../spdkit-python.note::df84f7ba][df84f7ba]]
+use distances::prelude::*;
+
+/// Represents a graph object for refinement of molecule structure
+/// using distance geometry algorithm.
+#[pyclass(mapping, module = "spdkit", subclass)]
+#[derive(Clone)]
+pub struct DgGraph {
+    inner: distances::DgGraph,
+}
+
+#[pymethods]
+impl DgGraph {
+    /// Set weight for atom `i` and `j` for refinement of molecule structure.
+    pub fn set_distance_weight(&mut self, i: usize, j: usize, w: f64) {
+        self.inner.set_distance_weight(i, j, w);
+    }
+
+    /// Set distance bound (lower/upper) for atom `i` and `j` for
+    /// refinement of molecule structure.
+    pub fn set_distance_bound(&mut self, i: usize, j: usize, lb: f64, ub: f64) {
+        self.inner.set_distance_bound(i, j, lb, ub);
+    }
+
+    /// Returns distance bound (lower/upper) for atom `i` and `j`.
+    pub fn get_distance_bound(&self, i: usize, j: usize) -> (f64, f64) {
+        self.inner.distance_bound(i, j)
+    }
+
+    /// Returns distance weight for atom `i` and `j`.
+    pub fn get_distance_weight(&self, i: usize, j: usize) -> f64 {
+        self.inner.distance_weight(i, j)
+    }
+
+    /// Constrain pairwise distances of atoms `selection` in Molecule `mol`.
+    #[pyo3(text_signature = "($self, mol, selection)")]
+    pub fn constrain_distances_within(&mut self, mol: PyMolecule, selection: Selection) -> PyResult<()> {
+        let selection = selection.try_into_list()?;
+        self.inner.constrain_distances_within(&mol.inner, &selection, 10.0);
+        Ok(())
+    }
+
+    /// Refine molecule structure `mol` using distance geometry.
+    #[pyo3(text_signature = "($self, mol)")]
+    pub fn refine_molecule(&mut self, mol: &mut PyMolecule) {
+        self.inner.refine_molecule(&mut mol.inner);
+    }
+}
+// df84f7ba ends here
 
 // [[file:../spdkit-python.note::fcc83408][fcc83408]]
 fn plot_3d(z: Vec<Vec<f64>>, x: Vec<f64>, y: Vec<f64>) {
