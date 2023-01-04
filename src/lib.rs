@@ -263,10 +263,17 @@ impl PyMolecule {
     }
 
     /// Replace atom `i` with new `atom`.
+    #[pyo3(text_signature = "($self, i, atom, /)")]
     pub fn set_atom(&mut self, i: usize, atom: PyAtom) -> PyResult<()> {
         let a = self.inner.get_atom_mut(i).ok_or(format_err!("no atom {i}"))?;
         *a = atom.inner;
         Ok(())
+    }
+
+    /// Set positions of atoms in sequential order.
+    #[pyo3(text_signature = "($self, positions, /)")]
+    pub fn set_positions(&mut self, positions: Vec<[f64; 3]>) {
+        self.inner.set_positions(positions);
     }
 
     /// Clean up molecule geometry using stress majorization algorithm.
