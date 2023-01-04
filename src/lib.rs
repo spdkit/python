@@ -1013,6 +1013,49 @@ impl DgGraph {
 }
 // df84f7ba ends here
 
+// [[file:../spdkit-python.note::db9c632d][db9c632d]]
+use distances::Interpolation;
+
+/// Structure interpolation in distance space.
+///
+/// # Parameters
+/// * r_cut: probe cutoff radius for nearest neighbours.
+#[derive(Clone)]
+#[pyclass(name = "Interpolation", subclass)]
+#[pyo3(text_signature = "(r_cut)")]
+pub struct PyInterpolation {
+    r_cut: f64,
+}
+
+#[pymethods]
+impl PyInterpolation {
+    #[new]
+    #[args(r_cut = "4.0")]
+    pub fn new(r_cut: f64) -> Self {
+        Self { r_cut }
+    }
+
+    /// Interpolate a new Molecue at position `f` between `mol1` and
+    /// `mol2`. `f` should be a positive number between 0 and 1.
+    pub fn interpolate(&self, mol1: PyMolecule, mol2: PyMolecule, f: f64) -> PyMolecule {
+        let inner = Interpolation::new(&mol1.inner, &mol2.inner)
+            .with_probe_radius(self.r_cut)
+            .interpolate(f);
+        PyMolecule { inner }
+    }
+
+    /// Return a `Molecule` as the weighted average of `mol1` and `mol2` in
+    /// distance space.
+    ///
+    /// # Parameters
+    /// * w1, w2: the weights for `mol1` and `mol2`, respectively.
+    pub fn weighted_average(&self, mol1: PyMolecule, mol2: PyMolecule, w1: f64, w2: f64) -> PyMolecule {
+        let inner = Interpolation::new(&mol1.inner, &mol2.inner).weighted_average(w1, w2);
+        PyMolecule { inner }
+    }
+}
+// db9c632d ends here
+
 // [[file:../spdkit-python.note::fcc83408][fcc83408]]
 fn plot_3d(z: Vec<Vec<f64>>, x: Vec<f64>, y: Vec<f64>) {
     use plotly::layout::Axis;
@@ -1103,6 +1146,7 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyMolecule>()?;
     m.add_class::<PyAtom>()?;
     m.add_class::<PyLattice>()?;
+    m.add_class::<PyInterpolation>()?;
     m.add_function(wrap_pyfunction!(set_verbosity, m)?)?;
     m.add_function(wrap_pyfunction!(parse_numbers_human_readable, m)?)?;
 
