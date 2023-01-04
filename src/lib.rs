@@ -183,7 +183,9 @@ pub fn parse_numbers_human_readable(s: String) -> Result<Vec<usize>> {
     let selected = parse_numbers_human_readable(&s)?;
     Ok(selected)
 }
+// c400da41 ends here
 
+// [[file:../spdkit-python.note::ef13f019][ef13f019]]
 #[derive(FromPyObject)]
 pub enum Selection {
     #[pyo3(transparent, annotation = "list")]
@@ -205,7 +207,7 @@ impl Selection {
         Ok(selection)
     }
 }
-// c400da41 ends here
+// ef13f019 ends here
 
 // [[file:../spdkit-python.note::969a9313][969a9313]]
 use gchemol::prelude::*;
@@ -740,6 +742,21 @@ impl PyMolecule {
     /// Describe available backends for reading/writing molecule
     pub fn describe_available_backends() {
         gchemol::io::describe_backends();
+    }
+
+    /// Return selected atoms by expanding `n` chemical bonds away from
+    /// the center atom `m`
+    ///
+    /// Note: the center atom m is put last in returned molecule.
+    #[pyo3(text_signature = "($self, m, n, /)")]
+    fn selection_by_expanding_bond(&self, m: usize, n: usize) -> Vec<usize> {
+        self.inner.selection_by_expanding_bond(m, n)
+    }
+    
+    /// Return selected atoms by cutoff distance `r` nearby central atom `n`
+    #[pyo3(text_signature = "($self, n, r, /)")]
+    fn selection_by_distance(&self, n: usize, r: f64) -> Vec<usize> {
+        self.inner.selection_by_distance(n, r)
     }
 }
 // 969a9313 ends here
