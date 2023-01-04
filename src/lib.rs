@@ -24,6 +24,12 @@ impl PyAtom {
         }
     }
 
+    /// Return a copy of `Atom`.
+    pub fn clone(&self) -> Self {
+        let inner = self.inner.clone();
+        Self {inner}
+    }
+
     /// Return element symbol
     pub fn symbol(&self) -> String {
         self.inner.symbol().to_string()
@@ -224,6 +230,12 @@ impl PyMolecule {
         Self { inner }
     }
 
+    /// Create a new copy of `Molecule.`
+    pub fn clone(&self) -> Self {
+        let inner = self.inner.clone();
+        Self {inner}
+    }
+
     /// Return the name of the molecule, which is typpically modified
     /// for safely storing in various chemical file formats.
     pub fn title(&self) -> String {
@@ -248,6 +260,13 @@ impl PyMolecule {
     pub fn to_json(&self) -> PyResult<String> {
         let json = gchemol::io::to_json(&self.inner)?;
         Ok(json)
+    }
+
+    /// Replace atom `i` with new `atom`.
+    pub fn set_atom(&mut self, i: usize, atom: PyAtom) -> PyResult<()> {
+        let a = self.inner.get_atom_mut(i).ok_or(format_err!("no atom {i}"))?;
+        *a = atom.inner;
+        Ok(())
     }
 
     /// Clean up molecule geometry using stress majorization algorithm.
