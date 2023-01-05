@@ -9,7 +9,7 @@ use gchemol::Atom;
 #[pyclass(name = "Atom")]
 #[derive(Clone)]
 /// Atom is the smallest particle still characterizing a chemical element.
-#[pyo3(text_signature = "(symbol, position)")]
+#[pyo3(text_signature = "(symbol, position=[0, 0, 0])")]
 pub struct PyAtom {
     inner: Atom,
 }
@@ -18,6 +18,7 @@ pub struct PyAtom {
 impl PyAtom {
     #[new]
     /// Construct `Atom` object from `symbol` and `position`.
+    #[args(position = "[0.0, 0.0, 0.0]")]
     pub fn new(symbol: String, position: [f64; 3]) -> Self {
         Self {
             inner: Atom::new(symbol, position),
@@ -27,15 +28,23 @@ impl PyAtom {
     /// Return a copy of `Atom`.
     pub fn clone(&self) -> Self {
         let inner = self.inner.clone();
-        Self {inner}
+        Self { inner }
     }
 
     /// Return element symbol
+    #[getter]
     pub fn symbol(&self) -> String {
         self.inner.symbol().to_string()
     }
 
+    /// Set atom symbol.
+    #[setter(symbol)]
+    pub fn set_symbol(&mut self, symbol: String) {
+        self.inner.set_symbol(symbol);
+    }
+
     /// Return atomic number
+    #[getter]
     pub fn number(&self) -> usize {
         self.inner.number()
     }
@@ -46,25 +55,26 @@ impl PyAtom {
     }
 
     /// Return atom position in 3D Cartesian coordinates
+    #[getter]
     pub fn position(&self) -> [f64; 3] {
         self.inner.position()
     }
 
     /// Change atom Cartesian position to `p` ([x, y, z]).
-    #[pyo3(text_signature = "($self, p, /)")]
+    #[setter]
     pub fn set_position(&mut self, p: [f64; 3]) {
         self.inner.set_position(p);
     }
 
-    /// Set atom symbol.
-    #[pyo3(text_signature = "($self, symbol, /)")]
-    pub fn set_symbol(&mut self, symbol: String) {
-        self.inner.set_symbol(symbol);
-    }
-
     /// Return freezing mask array for Cartesian coordinates
+    #[getter]
     pub fn freezing(&self) -> [bool; 3] {
         self.inner.freezing()
+    }
+
+    #[setter]
+    pub fn set_freezing(&mut self, freeze: [bool; 3]) {
+        self.inner.set_freezing(freeze);
     }
 
     /// Access Van der Waals radius of atom. Return None if no data available
@@ -120,16 +130,19 @@ impl PyLattice {
     }
 
     /// Returns Lattice vector a.
+    #[getter]
     pub fn vector_a(&self) -> [f64; 3] {
         self.inner.vector_a().into()
     }
 
     /// Returns Lattice vector b.
+    #[getter]
     pub fn vector_b(&self) -> [f64; 3] {
         self.inner.vector_b().into()
     }
 
     /// Returns Lattice vector c.
+    #[getter]
     pub fn vector_c(&self) -> [f64; 3] {
         self.inner.vector_c().into()
     }
@@ -186,8 +199,7 @@ pub fn parse_numbers_human_readable(s: String) -> Result<Vec<usize>> {
 // c400da41 ends here
 
 // [[file:../spdkit-python.note::ef13f019][ef13f019]]
-use gchemol::neighbors::Neighbor;
-use gchemol::NeighborProbe;
+use gchemol::neighbors::{Neighbor, NeighborProbe};
 
 #[derive(FromPyObject)]
 pub enum Selection {
@@ -300,12 +312,13 @@ impl PyMolecule {
 
     /// Return the name of the molecule, which is typpically modified
     /// for safely storing in various chemical file formats.
+    #[getter]
     pub fn title(&self) -> String {
         self.inner.title()
     }
 
     /// Set molecule's title to `title`.
-    #[pyo3(text_signature = "($self, title: String)")]
+    #[setter]
     pub fn set_title(&mut self, title: String) {
         self.inner.set_title(&title);
     }
