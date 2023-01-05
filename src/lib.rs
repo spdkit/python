@@ -186,6 +186,9 @@ pub fn parse_numbers_human_readable(s: String) -> Result<Vec<usize>> {
 // c400da41 ends here
 
 // [[file:../spdkit-python.note::ef13f019][ef13f019]]
+use gchemol::neighbors::Neighbor;
+use gchemol::NeighborProbe;
+
 #[derive(FromPyObject)]
 pub enum Selection {
     #[pyo3(transparent, annotation = "list")]
@@ -205,6 +208,63 @@ impl Selection {
             }
         };
         Ok(selection)
+    }
+}
+
+/// Represent a probe for searching nearby neighbors within distance
+/// cutoff.
+#[pyclass(name = "NeighborProbe", subclass)]
+pub struct PyNeighborProbe {
+    inner: NeighborProbe,
+}
+
+/// Helper struct for neighbors search result.
+#[pyclass(name = "Neighbor", subclass)]
+pub struct PyNeighbor {
+    inner: Neighbor,
+}
+
+#[pymethods]
+impl PyNeighbor {
+    #[getter(node)]
+    /// The node connected to the host point.
+    pub fn node(&self) -> usize {
+        self.inner.node
+    }
+
+    #[getter(distance)]
+    ///The distance to the host point.
+    pub fn distance(&self) -> f64 {
+        self.inner.distance
+    }
+
+    #[getter(image)]
+    /// Scaled displacment vector relative to origin cell if PBC enabled.
+    pub fn image(&self) -> Option<[f64; 3]> {
+        let image = self.inner.image?;
+        Some(image.into())
+    }
+}
+
+#[pymethods]
+impl PyNeighborProbe {
+    /// Return neighbors of a particle `p` within distance cutoff `r_cutoff`.
+    ///
+    /// # Parameters
+    /// * p: the Cartesian position or probe
+    /// * r_cutoff: the cutoff distance for searching neighbors
+    #[pyo3(text_signature = "($self, p, r_cutoff, /)")]
+    pub fn probe_neighbors(&self, p: [f64; 3], r_cutoff: f64) -> Vec<PyNeighbor> {
+        self.inner
+            .probe_neighbors(p, r_cutoff)
+            .map(|inner| PyNeighbor { inner })
+            .collect()
+    }
+
+    /// Return an iterator of the nodes connected to the node `n`.
+    #[pyo3(text_signature = "($self, n, r_cutoff, /)")]
+    pub fn neighbors(&self, n: usize, r_cutoff: f64) -> Vec<PyNeighbor> {
+        self.inner.neighbors(n, r_cutoff).map(|inner| PyNeighbor { inner }).collect()
     }
 }
 // ef13f019 ends here
@@ -757,6 +817,12 @@ impl PyMolecule {
     #[pyo3(text_signature = "($self, n, r, /)")]
     fn selection_by_distance(&self, n: usize, r: f64) -> Vec<usize> {
         self.inner.selection_by_distance(n, r)
+    }
+    
+    /// Return a `NeighborProbe` struct for finding nearest neighbors.
+    fn create_neighbor_probe(&self) -> PyNeighborProbe {
+        let inner = self.inner.create_neighbor_probe();
+        PyNeighborProbe { inner }
     }
 }
 // 969a9313 ends here
