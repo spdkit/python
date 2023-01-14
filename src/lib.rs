@@ -129,6 +129,28 @@ impl PyLattice {
         self.inner.to_cart(p).into()
     }
 
+    /// Wrap point `p` in Cartesian coordinates into unit cell,
+    /// obeying the periodic boundary conditions. Returns cartesian
+    /// coordinates.
+    #[pyo3(text_signature = "($self, p, /)")]
+    pub fn wrap(&self, p: [f64; 3]) -> [f64; 3] {
+        self.inner.wrap(p).into()
+    }
+
+    /// Wrap point `p` in fractional coordinates into unit cell,
+    /// obeying the periodic boundary conditions. Returns fractional
+    /// coordinates.
+    #[pyo3(text_signature = "($self, p, /)")]
+    pub fn wrap_frac(&self, p: [f64; 3]) -> [f64; 3] {
+        self.inner.wrap_frac(p).into()
+    }
+
+    /// Return the shortest vector obeying the minimum image convention.
+    #[pyo3(text_signature = "($self, p, /)")]
+    pub fn apply_mic(&self, p: [f64; 3]) -> [f64; 3] {
+        self.inner.apply_mic(p).into()
+    }
+
     /// Returns Lattice vector a.
     #[getter]
     pub fn vector_a(&self) -> [f64; 3] {
@@ -145,11 +167,6 @@ impl PyLattice {
     #[getter]
     pub fn vector_c(&self) -> [f64; 3] {
         self.inner.vector_c().into()
-    }
-
-    /// Return the shortest vector obeying the minimum image convention.
-    pub fn apply_mic(&self, p: [f64; 3]) -> [f64; 3] {
-        self.inner.apply_mic(p).into()
     }
 
     /// Return the shortest distance between pi (point i) and the
@@ -1177,6 +1194,53 @@ impl PyInterpolation {
     }
 }
 // db9c632d ends here
+
+// [[file:../spdkit-python.note::88853a11][88853a11]]
+use distances::ChemicalEnvironment;
+
+// #[derive(Clone)]
+// #[pyclass(name = "ChemicalEnvironment", subclass)]
+// #[pyo3(text_signature = "(mol)")]
+// /// New ChemicalEnvironment for Molecule mol, without elastic connections.
+// pub struct PyChemicalEnvironment {
+//     mol: Molecule,
+//     inner: Box<ChemicalEnvironment>,
+// }
+
+// #[pymethods]
+// impl PyChemicalEnvironment {
+//     #[new]
+//     pub fn new(mol: PyMolecule) -> Self {
+//         let mol = mol.inner;
+//         let inner = ChemicalEnvironment::new(&mol);
+//         Self {
+//             inner: Box::new(inner),
+//             mol,
+//         }
+//     }
+
+//     /// Define ChemicalEnvironment by probing local neighbors within
+//     /// distance cutoff r_cut
+//     #[pyo3(text_signature = "($self, r_cut)")]
+//     fn probe(self, r_cut: f64) -> Self {
+//         let inner = self.inner.probe(r_cut);
+//         self.inner = Box::new(inner);
+//         self
+//     }
+
+//     /// Reshape the structure of Molecule mol using probed coordination environment.
+//     #[pyo3(text_signature = "($self, mol)")]
+//     pub fn reshape(self, mol: &mut PyMolecule) {
+//         self.inner.reshape(&mut mol.inner);
+//     }
+
+//     /// Create a real auxiliary molecule with all periodic atoms, mainly for viewing and debugging.
+//     pub fn create_auxiliary_molecule(&self) -> PyMolecule {
+//         let inner = self.inner.create_auxiliary_molecule();
+//         PyMolecule { inner }
+//     }
+// }
+// 88853a11 ends here
 
 // [[file:../spdkit-python.note::fcc83408][fcc83408]]
 fn plot_3d(z: Vec<Vec<f64>>, x: Vec<f64>, y: Vec<f64>) {
