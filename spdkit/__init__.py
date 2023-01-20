@@ -1,6 +1,7 @@
 # [[file:../spdkit-python.note::fbe586a0][fbe586a0]]
 from .spdkit import *
 
+
 def from_ase_atoms(ase_atoms):
     """Construct a molecule object from ase Atoms"""
 
@@ -45,4 +46,19 @@ def to_ase_atom(atom: Atom):
     import ase
 
     ase.Atom(symbol=atom.symbol(), position=atom.position())
+
+
+def view_in_pymol(mol: Molecule):
+    """View molecule object using pymol"""
+    import subprocess, tempfile
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".pdb") as f:
+        molfile = f.name
+        mol.to_file(molfile)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py") as f:
+            print(f"pymol.cmd.load('{molfile}')\n", file=f)
+            print("pymol.cmd.show('sphere')", file=f)
+            print("pymol.cmd.show('cell')", file=f)
+            f.flush()
+            subprocess.call(["pymol", "-q", f.name])
 # fbe586a0 ends here

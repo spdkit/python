@@ -660,9 +660,12 @@ impl PyMolecule {
         Ok(())
     }
     
-    /// Return a list of bonds in arbitrary order.
+    /// Return a list of bonds in tuples (u, v, bond_order)
     pub fn bonds(&mut self) -> Vec<(usize, usize, f64)> {
-        self.inner.bonds().map(|(u, v, b)| (u, v, b.order())).collect()
+        self.inner
+            .bonds()
+            .map(|(u, v, b)| if u > v { (u, v, b.order()) } else { (v, u, b.order()) })
+            .collect()
     }
     
     /// Removes all bonds between atoms in `selection1` and `selection2`,
