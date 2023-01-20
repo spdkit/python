@@ -406,10 +406,11 @@ impl PyMolecule {
         Ok(self.inner.formula())
     }
 
-    /// Unbuild current crystal structure leaving a nonperiodic structure
-    pub fn unbuild_crystal(&mut self) -> PyResult<()> {
-        self.inner.unbuild_crystal();
-        Ok(())
+    /// Unbuild current crystal structure leaving a nonperiodic
+    /// structure. Return lattice if periodic, otherwise return None.
+    pub fn unbuild_crystal(&mut self) -> Option<PyLattice> {
+        let lat = self.inner.unbuild_crystal();
+        lat.map(|inner| PyLattice {inner})
     }
 
     /// Create a Lattice from the minimal bounding box of the Molecule

@@ -46,19 +46,61 @@ def to_ase_atom(atom: Atom):
     import ase
 
     ase.Atom(symbol=atom.symbol(), position=atom.position())
+# fbe586a0 ends here
 
-
-def view_in_pymol(mol: Molecule):
-    """View molecule object using pymol"""
+# [[file:../spdkit-python.note::ec59e65f][ec59e65f]]
+def view_in_pymol(mol: Molecule, rebond=False):
+    """View molecule object using pymol."""
     import subprocess, tempfile
+
+    if rebond:
+        # rebuild connectivity without periodic images
+        lat = mol.unbuild_crystal()
+        mol.rebond()
+        if lat:
+            mol.set_lattice(lat)
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pdb") as f:
         molfile = f.name
+        title = mol.title
         mol.to_file(molfile)
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py") as f:
-            print(f"pymol.cmd.load('{molfile}')\n", file=f)
+            print(f"pymol.cmd.load('{molfile}', '{title}')\n", file=f)
             print("pymol.cmd.show('sphere')", file=f)
+            print("pymol.cmd.show('stick')", file=f)
             print("pymol.cmd.show('cell')", file=f)
             f.flush()
-            subprocess.call(["pymol", "-q", f.name])
-# fbe586a0 ends here
+            # -J        cd to user's home directory
+            subprocess.call(["pymol", "-J", f.name])
+
+
+def view_traj_in_pymol(mols: list[Molecule]):
+    """View a list of molecule objects as trajectory using pymol."""
+    import subprocess, tempfile, os
+
+    with tempfile.TemporaryDirectory() as td:
+        # create pymol script
+        py = os.path.join(td, "script.py")
+        fpy = open(py, "w")
+
+        for i, m in enumerate(mols):
+            molfile = os.path.join(td, f"{i}.pdb")
+            title = m.title
+            m.to_file(molfile)
+            print(f"pymol.cmd.load('{molfile}', '{title}')\n", file=fpy)
+
+        # create trajectory animation
+        print("pymol.cmd.join_states('traj', '*')", file=fpy)
+        # remove other state objects
+        print("for f in pymol.cmd.get_object_list():", file=fpy)
+        print("    if f != 'traj':", file=fpy)
+        print("        pymol.cmd.delete(f)", file=fpy)
+        print("pymol.cmd.set('movie_fps', 5)", file=fpy)
+        print("pymol.cmd.show('sphere')", file=fpy)
+        print("pymol.cmd.show('stick')", file=fpy)
+        print("pymol.cmd.show('cell')", file=fpy)
+
+        # -J        cd to user's home directory
+        fpy.flush()
+        subprocess.call(["pymol", "-J", py])
+# ec59e65f ends here
