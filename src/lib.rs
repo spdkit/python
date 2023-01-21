@@ -1158,6 +1158,15 @@ impl DgGraph {
     pub fn refine_molecule(&mut self, mol: &mut PyMolecule) {
         self.inner.refine_molecule(&mut mol.inner);
     }
+
+    /// Refine molecule structure `mol` for atoms in selection only
+    /// using distance geometry.
+    #[pyo3(text_signature = "($self, mol, selection)")]
+    pub fn refine_molecule_selection(&mut self, mol: &mut PyMolecule, selection: Selection) -> PyResult<()> {
+        let selection = selection.try_into_list()?;
+        self.inner.refine_molecule_selection(&mut mol.inner, &selection);
+        Ok(())
+    }
 }
 // df84f7ba ends here
 
