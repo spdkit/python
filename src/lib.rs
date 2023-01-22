@@ -216,7 +216,7 @@ pub fn parse_numbers_human_readable(s: String) -> Result<Vec<usize>> {
 // c400da41 ends here
 
 // [[file:../spdkit-python.note::ef13f019][ef13f019]]
-use gchemol::neighbors::{Neighbor, NeighborProbe};
+use gchemol::neighbors::{Neighbor, Neighborhood};
 
 #[derive(FromPyObject)]
 pub enum Selection {
@@ -242,9 +242,9 @@ impl Selection {
 
 /// Represent a probe for searching nearby neighbors within distance
 /// cutoff.
-#[pyclass(name = "NeighborProbe", subclass)]
+#[pyclass(name = "Neighborhood", subclass)]
 pub struct PyNeighborProbe {
-    inner: NeighborProbe,
+    inner: Neighborhood,
 }
 
 /// Helper struct for neighbors search result.
@@ -283,9 +283,9 @@ impl PyNeighborProbe {
     /// * p: the Cartesian position or probe
     /// * r_cutoff: the cutoff distance for searching neighbors
     #[pyo3(text_signature = "($self, p, r_cutoff, /)")]
-    pub fn probe_neighbors(&self, p: [f64; 3], r_cutoff: f64) -> Vec<PyNeighbor> {
+    pub fn search(&self, p: [f64; 3], r_cutoff: f64) -> Vec<PyNeighbor> {
         self.inner
-            .probe_neighbors(p, r_cutoff)
+            .search(p, r_cutoff)
             .map(|inner| PyNeighbor { inner })
             .collect()
     }
@@ -858,7 +858,7 @@ impl PyMolecule {
         self.inner.selection_by_distance(n, r)
     }
     
-    /// Return a `NeighborProbe` struct for finding nearest neighbors.
+    /// Return a `Neighborhood` struct for finding nearest neighbors.
     fn create_neighbor_probe(&self) -> PyNeighborProbe {
         let inner = self.inner.create_neighbor_probe();
         PyNeighborProbe { inner }
@@ -1216,7 +1216,6 @@ impl PyInterpolation {
 // [[file:../spdkit-python.note::88853a11][88853a11]]
 use distances::dwim::ChemicalEnvironment;
 
-#[derive(Clone)]
 #[pyclass(name = "ChemicalEnvironment", subclass)]
 #[pyo3(text_signature = "(mol, rcut)")]
 /// New ChemicalEnvironment for Molecule mol, without elastic connections.
@@ -1225,30 +1224,30 @@ pub struct PyChemicalEnvironment {
     inner: ChemicalEnvironment,
 }
 
-#[pymethods]
-impl PyChemicalEnvironment {
-    #[new]
-    /// Define ChemicalEnvironment by probing local neighbors within
-    /// distance cutoff r_cut
-    pub fn probe(mol: PyMolecule, rcut: f64) -> Self {
-        let mol = mol.inner;
-        let inner = ChemicalEnvironment::new(&mol).probe(rcut);
+// #[pymethods]
+// impl PyChemicalEnvironment {
+//     #[new]
+//     /// Define ChemicalEnvironment by probing local neighbors within
+//     /// distance cutoff r_cut
+//     pub fn probe(mol: PyMolecule, rcut: f64) -> Self {
+//         let mol = mol.inner;
+//         let inner = ChemicalEnvironment::new(&mol).probe(rcut);
 
-        Self { mol, inner }
-    }
+//         Self { mol, inner }
+//     }
 
-    /// Reshape the structure of Molecule mol using probed coordination environment.
-    #[pyo3(text_signature = "($self, mol)")]
-    pub fn reshape(&self, mol: &mut PyMolecule) {
-        self.inner.reshape(&mut mol.inner);
-    }
+//     /// Reshape the structure of Molecule mol using probed coordination environment.
+//     #[pyo3(text_signature = "($self, mol)")]
+//     pub fn reshape(&self, mol: &mut PyMolecule) {
+//         self.inner.reshape(&mut mol.inner);
+//     }
 
-    /// Create a real auxiliary molecule with all periodic atoms, mainly for viewing and debugging.
-    pub fn create_auxiliary_molecule(&self) -> PyMolecule {
-        let inner = self.inner.create_auxiliary_molecule();
-        PyMolecule { inner }
-    }
-}
+//     /// Create a real auxiliary molecule with all periodic atoms, mainly for viewing and debugging.
+//     pub fn create_auxiliary_molecule(&self) -> PyMolecule {
+//         let inner = self.inner.create_auxiliary_molecule();
+//         PyMolecule { inner }
+//     }
+// }
 // 88853a11 ends here
 
 // [[file:../spdkit-python.note::fcc83408][fcc83408]]
