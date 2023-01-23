@@ -1213,43 +1213,6 @@ impl PyInterpolation {
 }
 // db9c632d ends here
 
-// [[file:../spdkit-python.note::88853a11][88853a11]]
-use distances::dwim::ChemicalEnvironment;
-
-#[pyclass(name = "ChemicalEnvironment", subclass)]
-#[pyo3(text_signature = "(mol, rcut)")]
-/// New ChemicalEnvironment for Molecule mol, without elastic connections.
-pub struct PyChemicalEnvironment {
-    mol: Molecule,
-    inner: ChemicalEnvironment,
-}
-
-// #[pymethods]
-// impl PyChemicalEnvironment {
-//     #[new]
-//     /// Define ChemicalEnvironment by probing local neighbors within
-//     /// distance cutoff r_cut
-//     pub fn probe(mol: PyMolecule, rcut: f64) -> Self {
-//         let mol = mol.inner;
-//         let inner = ChemicalEnvironment::new(&mol).probe(rcut);
-
-//         Self { mol, inner }
-//     }
-
-//     /// Reshape the structure of Molecule mol using probed coordination environment.
-//     #[pyo3(text_signature = "($self, mol)")]
-//     pub fn reshape(&self, mol: &mut PyMolecule) {
-//         self.inner.reshape(&mut mol.inner);
-//     }
-
-//     /// Create a real auxiliary molecule with all periodic atoms, mainly for viewing and debugging.
-//     pub fn create_auxiliary_molecule(&self) -> PyMolecule {
-//         let inner = self.inner.create_auxiliary_molecule();
-//         PyMolecule { inner }
-//     }
-// }
-// 88853a11 ends here
-
 // [[file:../spdkit-python.note::fcc83408][fcc83408]]
 fn plot_3d(z: Vec<Vec<f64>>, x: Vec<f64>, y: Vec<f64>) {
     use plotly::layout::Axis;
@@ -1331,6 +1294,56 @@ impl OptimizationTrajactory {
     }
 }
 // fcc83408 ends here
+
+// [[file:../spdkit-python.note::88853a11][88853a11]]
+use distances::docs::dg_periodic_probe::ChemicalEnvironment;
+
+#[pyclass(name = "ChemicalEnvironment", subclass)]
+#[pyo3(text_signature = "(mol, rcut)")]
+/// New ChemicalEnvironment for Molecule mol, without elastic connections.
+pub struct PyChemicalEnvironment {
+    mol: Molecule,
+    inner: ChemicalEnvironment,
+}
+
+#[pymethods]
+impl PyChemicalEnvironment {
+    #[new]
+    /// Define ChemicalEnvironment by probing local neighbors within
+    /// distance cutoff r_cut
+    pub fn probe(mol: PyMolecule, rcut: f64) -> Self {
+        let mol = mol.inner;
+        let inner = ChemicalEnvironment::probe(&mol, rcut);
+
+        Self { mol, inner }
+    }
+
+    /// Reshape the structure of Molecule mol using probed coordination environment.
+    #[pyo3(text_signature = "($self, mol)")]
+    pub fn reshape(&self, mol: &mut PyMolecule) {
+        self.inner.reshape(&mut mol.inner);
+    }
+
+    /// Create central molecule from atom `i` with direct
+    /// neighbors. Molecule `mol_lat` may have differnt 3D structure,
+    /// but must share the same numbering system with its parent molecule.
+    #[pyo3(text_signature = "($self, i, mol_alt=None)")]
+    pub fn create_central_molecule(&self, i: usize, mol_alt: Option<PyMolecule>) -> Option<PyMolecule> {
+        let inner = if let Some(mol) = mol_alt {
+            self.inner.create_central_molecule(i, Some(&mol.inner))?
+        } else {
+            self.inner.create_central_molecule(i, None)?
+        };
+        PyMolecule { inner }.into()
+    }
+
+    /// Create a real auxiliary molecule with all periodic atoms, mainly for viewing and debugging.
+    pub fn create_auxiliary_molecule(&self) -> Option<PyMolecule> {
+        let inner = self.inner.create_auxiliary_molecule()?;
+        PyMolecule { inner }.into()
+    }
+}
+// 88853a11 ends here
 
 // [[file:../spdkit-python.note::fbe87af8][fbe87af8]]
 #[pymodule]
