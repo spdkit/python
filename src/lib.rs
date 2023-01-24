@@ -1320,8 +1320,16 @@ impl PyChemicalEnvironment {
 
     /// Reshape the structure of Molecule mol using probed coordination environment.
     #[pyo3(text_signature = "($self, mol)")]
-    pub fn reshape(&self, mol: &mut PyMolecule) {
-        self.inner.reshape(&mut mol.inner);
+    pub fn reshape(&self, mol: &mut PyMolecule) -> usize {
+        self.inner.reshape(&mut mol.inner)
+    }
+
+    /// Update elastic constrains from `mol`, which maintaining original connectivity.
+    #[pyo3(text_signature = "($self, mol)")]
+    pub fn update_constrains_from(&mut self, mol: &PyMolecule) -> Result<()> {
+        self.inner.update_constrains_from(&mol.inner)?;
+
+        Ok(())
     }
 
     /// Create central molecule from atom `i` with direct
