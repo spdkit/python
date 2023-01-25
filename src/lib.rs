@@ -43,6 +43,18 @@ impl PyAtom {
         self.inner.set_symbol(symbol);
     }
 
+    /// Return atom label
+    #[getter]
+    pub fn label(&self) -> String {
+        self.inner.label().to_string()
+    }
+
+    /// Set atom label.
+    #[setter(label)]
+    pub fn set_label(&mut self, label: String) {
+        self.inner.set_label(label);
+    }
+
     /// Return atomic number
     #[getter]
     pub fn number(&self) -> usize {
@@ -1343,7 +1355,7 @@ impl PyChemicalEnvironment {
     /// neighbors.
     #[pyo3(text_signature = "($self, i)")]
     pub fn create_central_molecule(&self, i: usize, mol_alt: Option<PyMolecule>) -> Option<PyMolecule> {
-        let inner = self.inner.create_central_molecule(i)?;
+        let inner = self.inner.create_central_molecule(i, None)?;
         PyMolecule { inner }.into()
     }
 
