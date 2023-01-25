@@ -1351,11 +1351,23 @@ impl PyChemicalEnvironment {
         Ok(())
     }
 
+    /// Return distance constraint between node `u` and `v`.
+    #[pyo3(text_signature = "($self, u, v)")]
+    pub fn get_distance_constraint(&self, u: usize, v: usize) -> Option<f64> {
+        self.inner.get_distance_constraint(u, v)
+    }
+
+    /// Constrain distance `u--v` to `d` when refinement.
+    #[pyo3(text_signature = "($self, u, v, d)")]
+    pub fn set_distance_constraint(&mut self, u: usize, v: usize, d: f64) {
+        self.inner.set_distance_constraint(u, v, d)
+    }
+
     /// Create central molecule from atom `i` with direct
     /// neighbors.
     #[pyo3(text_signature = "($self, i)")]
     pub fn create_central_molecule(&self, i: usize, mol_alt: Option<PyMolecule>) -> Option<PyMolecule> {
-        let inner = self.inner.create_central_molecule(i, None)?;
+        let inner = self.inner.create_central_molecule(i, mol_alt.map(|m| m.inner).as_ref())?;
         PyMolecule { inner }.into()
     }
 
