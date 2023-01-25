@@ -61,12 +61,22 @@ def view_in_pymol(mol: Molecule, rebond=False):
         if lat:
             mol.set_lattice(lat)
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".pdb") as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".mol2") as f:
         molfile = f.name
         title = mol.title
+        lat = mol.get_lattice()
         mol.to_file(molfile)
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py") as f:
             print(f"pymol.cmd.load('{molfile}', '{title}')\n", file=f)
+            # pymol doesnot recognize lattice data
+            # set lattice/cell object
+            if lat:
+                a, b, c = lat.lengths()
+                alpha, beta, gamma = lat.angles()
+                print(
+                    f"pymol.cmd.set_symmetry('all', {a}, {b}, {c}, {alpha}, {beta}, {gamma})",
+                    file=f,
+                )
             print("pymol.cmd.show('sphere')", file=f)
             print("pymol.cmd.show('stick')", file=f)
             print("pymol.cmd.show('cell')", file=f)
@@ -75,7 +85,9 @@ def view_in_pymol(mol: Molecule, rebond=False):
             f.flush()
             # return subprocess.run(["pymol", "-J", f.name])
             # wait one second for pymol reading temp files
-            p = subprocess.Popen(["pymol", f.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(
+                ["pymol", f.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
             time.sleep(2)
             return p
 
@@ -93,7 +105,7 @@ def view_traj_in_pymol(mols: list[Molecule], separated=True):
         # create trajectory animation
         for i, m in enumerate(mols):
             i += 1
-            molfile = os.path.join(td, f"{i}.pdb")
+            molfile = os.path.join(td, f"{i}.mol2")
             title = m.title
             m.to_file(molfile)
             if separated:
@@ -102,6 +114,15 @@ def view_traj_in_pymol(mols: list[Molecule], separated=True):
                 )
             else:
                 print(f"pymol.cmd.load('{molfile}')\n", file=fpy)
+            lat = m.get_lattice()
+            # pymol doesnot recognize lattice data
+            if lat:
+                a, b, c = lat.lengths()
+                alpha, beta, gamma = lat.angles()
+                print(
+                    f"pymol.cmd.set_symmetry('all', {a}, {b}, {c}, {alpha}, {beta}, {gamma})",
+                    file=f,
+                )
 
         print("pymol.cmd.set('movie_fps', 5)", file=fpy)
         print("pymol.cmd.show('sphere')", file=fpy)
@@ -112,7 +133,9 @@ def view_traj_in_pymol(mols: list[Molecule], separated=True):
 
         fpy.flush()
         # return subprocess.run(["pymol", py])
-        p = subprocess.Popen(["pymol", py], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(
+            ["pymol", py], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         # wait one second for pymol reading temp files
         time.sleep(2)
         return p
