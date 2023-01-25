@@ -191,7 +191,12 @@ impl PyLattice {
 
     /// Lattice length parameters: a, b, c.
     pub fn lengths(&self) -> [f64; 3] {
-        self.inner.lengths().into()
+        self.inner.lengths()
+    }
+
+    /// Lattice angles parameters: alpha, beta, gamma in degree.
+    pub fn angles(&self) -> [f64; 3] {
+        self.inner.angles()
     }
 
     /// Return the volume of the unit cell the cache will be updated
