@@ -74,7 +74,7 @@ def view_in_pymol(mol: Molecule, rebond=False):
             subprocess.call(["pymol", "-J", f.name])
 
 
-def view_traj_in_pymol(mols: list[Molecule]):
+def view_traj_in_pymol(mols: list[Molecule], separated=True):
     """View a list of molecule objects as trajectory using pymol."""
     import subprocess, tempfile, os
 
@@ -83,24 +83,24 @@ def view_traj_in_pymol(mols: list[Molecule]):
         py = os.path.join(td, "script.py")
         fpy = open(py, "w")
 
+        # create trajectory animation
         for i, m in enumerate(mols):
+            i += 1
             molfile = os.path.join(td, f"{i}.pdb")
             title = m.title
             m.to_file(molfile)
-            print(f"pymol.cmd.load('{molfile}', '{title}')\n", file=fpy)
+            if separated:
+                print(f"pymol.cmd.load('{molfile}', object='traj', state=0)\n", file=fpy)
+            else:
+                print(f"pymol.cmd.load('{molfile}')\n", file=fpy)
 
-        # create trajectory animation
-        print("pymol.cmd.join_states('traj', '*')", file=fpy)
-        # remove other state objects
-        print("for f in pymol.cmd.get_object_list():", file=fpy)
-        print("    if f != 'traj':", file=fpy)
-        print("        pymol.cmd.delete(f)", file=fpy)
         print("pymol.cmd.set('movie_fps', 5)", file=fpy)
         print("pymol.cmd.show('sphere')", file=fpy)
         print("pymol.cmd.show('stick')", file=fpy)
+        print("pymol.cmd.label('all', 'ID')", file=fpy)
         print("pymol.cmd.show('cell')", file=fpy)
+        print("pymol.cmd.orient()", file=fpy)
 
-        # -J        cd to user's home directory
         fpy.flush()
-        subprocess.call(["pymol", "-J", py])
+        subprocess.call(["pymol", py])
 # ec59e65f ends here
