@@ -1324,24 +1324,26 @@ impl PyChemicalEnvironment {
         self.inner.reshape(&mut mol.inner)
     }
 
+    /// Set parent `Molecule` to `mol`.  Molecule `mol` may have
+    /// differnt 3D structure, but must share the same numbering
+    /// system with its parent molecule.
+    #[pyo3(text_signature = "($self, mol)")]
+    pub fn reparent(&mut self, mol: PyMolecule) {
+        self.inner.reparent(mol.inner)
+    }
+
     /// Update elastic constrains from `mol`, which maintaining original connectivity.
     #[pyo3(text_signature = "($self, mol)")]
     pub fn update_constrains_from(&mut self, mol: &PyMolecule) -> Result<()> {
         self.inner.update_constrains_from(&mol.inner)?;
-
         Ok(())
     }
 
     /// Create central molecule from atom `i` with direct
-    /// neighbors. Molecule `mol_lat` may have differnt 3D structure,
-    /// but must share the same numbering system with its parent molecule.
-    #[pyo3(text_signature = "($self, i, mol_alt=None)")]
+    /// neighbors.
+    #[pyo3(text_signature = "($self, i)")]
     pub fn create_central_molecule(&self, i: usize, mol_alt: Option<PyMolecule>) -> Option<PyMolecule> {
-        let inner = if let Some(mol) = mol_alt {
-            self.inner.create_central_molecule(i, Some(&mol.inner))?
-        } else {
-            self.inner.create_central_molecule(i, None)?
-        };
+        let inner = self.inner.create_central_molecule(i)?;
         PyMolecule { inner }.into()
     }
 
