@@ -52,6 +52,7 @@ def to_ase_atom(atom: Atom):
 def view_in_pymol(mol: Molecule, rebond=False):
     """View molecule object using pymol."""
     import subprocess, tempfile
+    import time
 
     if rebond:
         # rebuild connectivity without periodic images
@@ -69,14 +70,20 @@ def view_in_pymol(mol: Molecule, rebond=False):
             print("pymol.cmd.show('sphere')", file=f)
             print("pymol.cmd.show('stick')", file=f)
             print("pymol.cmd.show('cell')", file=f)
+            print("pymol.cmd.label('all', 'ID')", file=f)
+            print("pymol.cmd.orient()", file=f)
             f.flush()
-            # -J        cd to user's home directory
-            subprocess.call(["pymol", "-J", f.name])
+            # return subprocess.run(["pymol", "-J", f.name])
+            # wait one second for pymol reading temp files
+            p = subprocess.Popen(["pymol", f.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            time.sleep(2)
+            return p
 
 
 def view_traj_in_pymol(mols: list[Molecule], separated=True):
     """View a list of molecule objects as trajectory using pymol."""
     import subprocess, tempfile, os
+    import time
 
     with tempfile.TemporaryDirectory() as td:
         # create pymol script
@@ -90,17 +97,23 @@ def view_traj_in_pymol(mols: list[Molecule], separated=True):
             title = m.title
             m.to_file(molfile)
             if separated:
-                print(f"pymol.cmd.load('{molfile}', object='traj', state=0)\n", file=fpy)
+                print(
+                    f"pymol.cmd.load('{molfile}', object='traj', state=0)\n", file=fpy
+                )
             else:
                 print(f"pymol.cmd.load('{molfile}')\n", file=fpy)
 
         print("pymol.cmd.set('movie_fps', 5)", file=fpy)
         print("pymol.cmd.show('sphere')", file=fpy)
         print("pymol.cmd.show('stick')", file=fpy)
-        print("pymol.cmd.label('all', 'ID')", file=fpy)
         print("pymol.cmd.show('cell')", file=fpy)
+        print("pymol.cmd.label('all', 'ID')", file=fpy)
         print("pymol.cmd.orient()", file=fpy)
 
         fpy.flush()
-        subprocess.call(["pymol", py])
+        # return subprocess.run(["pymol", py])
+        p = subprocess.Popen(["pymol", py], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # wait one second for pymol reading temp files
+        time.sleep(2)
+        return p
 # ec59e65f ends here
