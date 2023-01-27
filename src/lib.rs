@@ -754,44 +754,14 @@ impl PyMolecule {
     /// * Heavy atoms have more weights.
     #[pyo3(text_signature = "($self, mol_ref, /, selection = None)")]
     pub fn superimpose_onto(&mut self, mol_ref: Self, selection: Option<Selection>) -> PyResult<f64> {
-        use gchemol::geom::prelude::*;
-        use gchemol::geom::Superimpose;
-    
-        let (positions_this, positions_prev, weights) = if let Some(selected) = selection {
-            let selected = selected.try_into_list()?;
-            let this = selected.iter().map(|&i| self.get_atom(i).unwrap().position()).collect_vec();
-            let prev = selected
-                .iter()
-                .map(|&i| mol_ref.get_atom(i).unwrap().position())
-                .collect_vec();
-            let weights = selected
-                .iter()
-                .map(|&i| self.get_atom(i).unwrap().get_mass().unwrap())
-                .collect_vec();
-            (this, prev, weights)
+        let rmsd = if let Some(selected) = selection {
+            let s = selected.try_into_list()?;
+            self.inner
+                .superimpose_onto(&mol_ref.inner, Some(&s))
         } else {
-            (
-                self.inner.positions().collect_vec(),
-                mol_ref.inner.positions().collect_vec(),
-                self.inner.masses().collect_vec(),
-            )
-        };
-        assert_eq!(positions_this.len(), positions_prev.len());
-        assert_eq!(positions_this.len(), weights.len());
-        let sp1 = Superimpose::new(&positions_this).onto(&positions_prev, weights.as_slice().into());
-        let mut positions_this_mirrored = positions_this.clone();
-        positions_this_mirrored.mirror_invert();
-        let sp2 = Superimpose::new(&positions_this_mirrored).onto(&positions_prev, weights.as_slice().into());
-        let positions_this_all = self.inner.positions().collect_vec();
-        let (positions_new, rmsd) = if sp1.rmsd < sp2.rmsd {
-            (sp1.apply(&positions_this_all), sp1.rmsd)
-        } else {
-            let mut positions_this_all_mirrored = positions_this_all.clone();
-            positions_this_all_mirrored.mirror_invert();
-            (sp2.apply(&positions_this_all_mirrored), sp2.rmsd)
+            self.inner.superimpose_onto(&mol_ref.inner, None)
         };
     
-        self.inner.set_positions(positions_new);
         Ok(rmsd)
     }
 
