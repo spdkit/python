@@ -1351,6 +1351,13 @@ impl PyChemicalEnvironment {
         let inner = self.inner.create_auxiliary_molecule()?;
         PyMolecule { inner }.into()
     }
+
+    /// Update immediate constraints of atom `i` from `mol`.
+    #[pyo3(text_signature = "($self, mol, i)")]
+    pub fn update_constraints_for_center_from(&mut self, mol: PyMolecule, i: usize) -> Result<()> {
+        self.inner.update_constraints_for_center_from(&mol.inner, i)?;
+        Ok(())
+    }
 }
 // 88853a11 ends here
 
