@@ -791,7 +791,7 @@ impl PyMolecule {
     /// This is an operation of reordering the atoms in a way that does not depend
     /// on where they were before. The bonding graph is important for this
     /// operation.
-    pub fn reorder_cannonically(&mut self) -> Vec<usize> {
+    pub fn reorder_cannonically(&mut self) -> (Vec<usize>, Vec<usize>) {
         use spdkit::prelude::FingerPrintExt;
         self.inner.reorder_cannonically()
     }
