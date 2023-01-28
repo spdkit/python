@@ -1347,16 +1347,15 @@ impl PyChemicalEnvironment {
         self.inner.set_distance_constraint(u, v, d)
     }
 
-    /// Create central molecule from atom `i` with direct
-    /// neighbors. Return center atom sn and the created molecule.
+    /// Create central molecule from atom `i` with direct neighbors.
     #[pyo3(text_signature = "($self, i)")]
-    pub fn create_central_molecule(&self, i: usize, mol_alt: Option<PyMolecule>) -> Option<(usize, PyMolecule)> {
-        let (i, inner) = self.inner.create_central_molecule(i, mol_alt.map(|m| m.inner).as_ref())?;
+    pub fn create_central_molecule(&self, i: usize, mol_alt: Option<PyMolecule>) -> Option<PyMolecule> {
+        let inner = self.inner.create_central_molecule(i, mol_alt.map(|m| m.inner).as_ref())?;
         let m = PyMolecule { inner };
-        (i, m).into()
+        m.into()
     }
 
-    /// Create a real auxiliary molecule with all periodic atoms, mainly for viewing and debugging.
+    /// Create a real auxiliary molecule with all periodic atoms.
     pub fn create_auxiliary_molecule(&self) -> Option<PyMolecule> {
         let inner = self.inner.create_auxiliary_molecule()?;
         PyMolecule { inner }.into()
