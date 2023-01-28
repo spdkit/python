@@ -49,7 +49,7 @@ def to_ase_atom(atom: Atom):
 # fbe586a0 ends here
 
 # [[file:../spdkit-python.note::ec59e65f][ec59e65f]]
-def view_in_pymol(mol: Molecule, rebond=False, format='pdb'):
+def view_in_pymol(mol: Molecule, rebond=False, format="pdb"):
     """View molecule object using pymol."""
     import subprocess, tempfile
     import time
@@ -92,7 +92,7 @@ def view_in_pymol(mol: Molecule, rebond=False, format='pdb'):
             return p
 
 
-def view_traj_in_pymol(mols: list[Molecule], separated=True, format='pdb'):
+def view_traj_in_pymol(mols: list[Molecule], animated=True, format="mol2", sleep=5):
     """View a list of molecule objects as trajectory using pymol."""
     import subprocess, tempfile, os
     import time
@@ -108,7 +108,7 @@ def view_traj_in_pymol(mols: list[Molecule], separated=True, format='pdb'):
             molfile = os.path.join(td, f"{i}.{format}")
             title = m.title
             m.to_file(molfile)
-            if separated:
+            if animated:
                 print(
                     f"pymol.cmd.load('{molfile}', object='traj', state=0)\n", file=fpy
                 )
@@ -137,7 +137,7 @@ def view_traj_in_pymol(mols: list[Molecule], separated=True, format='pdb'):
         p = subprocess.Popen(
             ["pymol", py], stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        # wait one second for pymol reading temp files
-        time.sleep(2)
+        # wait a few seconds for pymol reading temp files
+        time.sleep(sleep)
         return p
 # ec59e65f ends here
