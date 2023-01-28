@@ -796,6 +796,15 @@ impl PyMolecule {
         self.inner.reorder_cannonically()
     }
     
+    /// Make `self` resemble `mol_ref` by applying rigid operations in
+    /// permutation, translation or rotation, without changing inner
+    /// 3D geometry. Equivalent atoms are recoginized based on
+    /// connectivity. Return alignment rmsd on success.
+    pub fn resemble_rigidly(&mut self, mol_ref: PyMolecule) -> Result<f64> {
+        use spdkit::prelude::FingerPrintExt;
+        self.inner.resemble_rigidly(&mol_ref.inner)
+    }
+    
     /// Convert `Molecule` to a graph object for distance geometry
     /// refinement.
     pub fn to_distance_geometry_graph(&self) -> DgGraph {
