@@ -1084,6 +1084,23 @@ impl PyGrepReader {
         let inner = self.inner.view_lines(n)?;
         Ok(PyTextViewer { inner })
     }
+
+    /// Return text from current position to the next marker or file
+    /// end. It method will forward the cursor to the next marker.
+    #[pyo3(text_signature = "($self)")]
+    pub fn read_until_next_marker(&mut self) -> PyResult<String> {
+        let mut s = String::new();
+        self.inner.read_until_next_marker(&mut s)?;
+        Ok(s)
+    }
+
+    /// View all lines until next marker like in a normal text viewer.
+    /// It method will forward the cursor to the next marker.
+    #[pyo3(text_signature = "($self)")]
+    pub fn view_until_next_marker(&mut self) -> PyResult<PyTextViewer> {
+        let inner = self.inner.view_until_next_marker()?;
+        Ok(PyTextViewer { inner })
+    }
 }
 // 7ff1511e ends here
 
