@@ -1012,6 +1012,7 @@ use gchemol_parser::GrepReader;
 /// Quick grep text by marking the line that matching a pattern,
 /// suitable for very large text file.
 #[pyclass(name = "GrepReader", subclass)]
+#[pyo3(text_signature = "(path)")]
 pub struct PyGrepReader {
     inner: GrepReader,
 }
@@ -1019,8 +1020,7 @@ pub struct PyGrepReader {
 #[pymethods]
 impl PyGrepReader {
     /// Create a `GrepReader` from file in `path`.
-    #[staticmethod]
-    #[pyo3(text_signature = "($self, path)")]
+    #[new]
     pub fn from_file(path: String) -> PyResult<Self> {
         let inner = GrepReader::try_from_path(path.as_ref())?;
         Ok(Self { inner })
