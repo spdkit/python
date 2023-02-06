@@ -19,6 +19,7 @@ gchemol-parser = { version = "0.4", features = ["adhoc"] }
 plotly = "0.8.3"
 tabled = "0.10.0"
 gosh-model = { version = "0.1.0" }
+gosh-database = { version = "0.1.0" }
 serde_json = "1"
 
 [dev-dependencies]

@@ -3,6 +3,10 @@ use pyo3::prelude::*;
 use pyo3::types::PyType;
 // 0cbf1e93 ends here
 
+// [[file:../spdkit-python.note::787fe451][787fe451]]
+mod db;
+// 787fe451 ends here
+
 // [[file:../spdkit-python.note::95be1618][95be1618]]
 use gchemol::Atom;
 
@@ -1389,6 +1393,7 @@ impl PyChemicalEnvironment {
 
 // [[file:../spdkit-python.note::282503ba][282503ba]]
 #[pyclass(name = "Computed", subclass)]
+#[derive(Clone)]
 pub struct PyComputed {
     inner: Computed,
 }
@@ -1486,6 +1491,10 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     let gosh = PyModule::new(py, "gosh")?;
     gosh.add_class::<PyBlackBoxModel>()?;
     m.add_submodule(gosh)?;
+
+    // database
+    let s = db::new(py, "db")?;
+    m.add_submodule(s)?;
 
     // for ad-hoc experiments
     let dwim = PyModule::new(py, "dwim")?;
