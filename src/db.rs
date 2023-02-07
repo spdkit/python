@@ -1,57 +1,33 @@
 // [[file:../spdkit-python.note::be102058][be102058]]
 use pyo3::prelude::*;
 
-use gosh_database::CheckpointDb;
 use gut::prelude::*;
 // be102058 ends here
 
-// [[file:../spdkit-python.note::5e90626e][5e90626e]]
-use super::{Computed, PyComputed};
+// [[file:../spdkit-python.note::6b44aa6c][6b44aa6c]]
+use gosh_database::DbConnection;
 
-#[pyclass(name = "CheckpointDb")]
-pub struct PyCheckpointDb {
-    inner: CheckpointDb,
+#[pyclass(name = "DbConnection")]
+#[derive(Clone)]
+pub struct PyDbConnection {
+    pub inner: DbConnection,
 }
 
 #[pymethods]
-impl PyCheckpointDb {
+impl PyDbConnection {
     #[new]
-    /// Construct Checkpoint from `path` to a file.
-    pub fn new(path: String) -> Self {
-        Self {
-            inner: CheckpointDb::new(path),
-        }
-    }
-
-    /// Load latest computed from checkpoint
-    pub fn load_from_latest(&self) -> Result<PyComputed> {
-        let inner = self.inner.load_from_latest::<Computed>()?;
-        Ok(PyComputed { inner })
-    }
-
-    /// Load computed from checkpoint in slot `n`
-    pub fn load_from_slot_n(&self, n: i32) -> Result<PyComputed> {
-        let inner = self.inner.load_from_slot_n::<Computed>(n)?;
-        Ok(PyComputed { inner })
-    }
-
-    /// Commit a checkpoint into database. Return true if committed, false otherwise.
-    pub fn commit(&self, computed: super::PyComputed) -> Result<bool> {
-        let r = self.inner.commit(&computed.inner)?;
-        Ok(r)
-    }
-
-    pub fn list(&self) -> Result<bool> {
-        let r = self.inner.list::<Computed>()?;
+    pub fn connect(path: String) -> Result<Self> {
+        let inner = DbConnection::connect(&path)?;
+        let r = Self { inner };
         Ok(r)
     }
 }
-// 5e90626e ends here
+// 6b44aa6c ends here
 
 // [[file:../spdkit-python.note::83f2f6c1][83f2f6c1]]
 pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     let m = PyModule::new(py, name)?;
-    // m.add_class::<PyChemicalEnvironment>()?;
+    m.add_class::<PyDbConnection>()?;
     Ok(m)
 }
 // 83f2f6c1 ends here

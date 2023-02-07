@@ -1392,6 +1392,9 @@ impl PyChemicalEnvironment {
 // 88853a11 ends here
 
 // [[file:../spdkit-python.note::282503ba][282503ba]]
+use crate::db::PyDbConnection;
+use gosh_database::prelude::Checkpoint;
+
 #[pyclass(name = "Computed", subclass)]
 #[derive(Clone)]
 pub struct PyComputed {
@@ -1425,6 +1428,36 @@ impl PyComputed {
     pub fn to_json(&self) -> String {
         serde_json::to_string_pretty(&self.inner).unwrap()
     }
+
+    // db related methods, which can only be put here for pyo3 limitations
+    #[pyo3(text_signature = "($self, db)")]
+    pub fn commit_checkpoint(&self, db: PyDbConnection) -> Result<()> {
+        self.inner.commit_checkpoint(&db.inner)?;
+        Ok(())
+    }
+
+    #[staticmethod]
+    #[pyo3(text_signature = "(db, slot)")]
+    /// Load computed from checkpoint `db` in slot `n`
+    pub fn from_checkpoint_n(db: PyDbConnection, slot: i32) -> Result<Self> {
+        let inner = Computed::from_checkpoint_n(&db.inner, slot)?;
+        Ok(Self { inner })
+    }
+
+    #[staticmethod]
+    #[pyo3(text_signature = "(db)")]
+    /// Load latest computed from checkpoint `db`
+    pub fn from_checkpoint(db: PyDbConnection) -> Result<Self> {
+        Self::from_checkpoint_n(db, -1)
+    }
+
+    #[staticmethod]
+    #[pyo3(text_signature = "(db)")]
+    /// List available checkpoints in `db`.
+    pub fn list_checkpoints(db: PyDbConnection) -> Result<()> {
+        Computed::list_checkpoints(&db.inner)?;
+        Ok(())
+    }
 }
 // 282503ba ends here
 
@@ -1455,6 +1488,7 @@ impl PyBlackBoxModel {
     }
 
     /// Compute `mol` using this model for properties.
+    #[pyo3(text_signature = "($self, mol)")]
     pub fn compute(&mut self, mol: &PyMolecule) -> Result<PyComputed> {
         let inner = self.inner.compute(&mol.inner)?;
         Ok(PyComputed { inner })
