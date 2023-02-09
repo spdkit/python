@@ -142,12 +142,61 @@ impl PyBlackBoxModel {
 }
 // a6cc3f1c ends here
 
+// [[file:../spdkit-python.note::59752afa][59752afa]]
+use gosh::remote::JobHub;
+
+/// A job hub for parallel running of multiple jobs over remote
+/// computational nodes
+#[pyclass(name = "JobHub", subclass)]
+#[pyo3(text_signature = "(scheduler_address)")]
+pub struct PyJobHub {
+    inner: JobHub,
+}
+
+#[pymethods]
+impl PyJobHub {
+    /// Create a job hub for background scheduler specified in
+    /// `scheduler_address`.
+    #[new]
+    pub fn new(scheduler_address: String) -> Self {
+        let inner = JobHub::new(&scheduler_address);
+        Self { inner }
+    }
+
+    /// Return the number of parallel threads.
+    #[staticmethod]
+    pub fn num_threads() -> usize {
+        JobHub::num_threads()
+    }
+
+    /// Set up number of threads for parallel run.
+    #[staticmethod]
+    pub fn set_num_threads(n: usize) -> Result<()> {
+        JobHub::set_num_threads(n)?;
+        Ok(())
+    }
+
+    /// Add a new job into job hub for scheduling.
+    #[pyo3(text_signature = "($self, cmd)")]
+    pub fn add_job(&mut self, cmd: String) {
+        self.inner.add_job(cmd);
+    }
+
+    /// Run all scheduled jobs with nodes in pool.
+    pub fn run(&mut self) -> Result<()> {
+        self.inner.run()?;
+        Ok(())
+    }
+}
+// 59752afa ends here
+
 // [[file:../spdkit-python.note::83f2f6c1][83f2f6c1]]
 pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     let m = PyModule::new(py, name)?;
     m.add_class::<PyBlackBoxModel>()?;
     m.add_class::<PyComputed>()?;
     m.add_class::<PyDbConnection>()?;
+    m.add_class::<PyJobHub>()?;
     Ok(m)
 }
 // 83f2f6c1 ends here
