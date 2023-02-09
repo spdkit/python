@@ -7,7 +7,7 @@ use super::PyMolecule;
 // be102058 ends here
 
 // [[file:../spdkit-python.note::6b44aa6c][6b44aa6c]]
-use gosh_database::DbConnection;
+use gosh::db::DbConnection;
 
 #[pyclass(name = "DbConnection")]
 #[derive(Clone)]
@@ -27,7 +27,7 @@ impl PyDbConnection {
 // 6b44aa6c ends here
 
 // [[file:../spdkit-python.note::282503ba][282503ba]]
-use gosh_database::prelude::Checkpoint;
+use gosh::db::prelude::Checkpoint;
 
 #[pyclass(name = "Computed", subclass)]
 #[derive(Clone)]
@@ -96,7 +96,7 @@ impl PyComputed {
 // 282503ba ends here
 
 // [[file:../spdkit-python.note::a6cc3f1c][a6cc3f1c]]
-use gosh_model::{BlackBoxModel, ChemicalModel, Computed};
+use gosh::model::{BlackBoxModel, ChemicalModel, Computed};
 
 #[pyclass(name = "BlackBoxModel", subclass)]
 #[pyo3(text_signature = "(dir)")]
@@ -131,6 +131,13 @@ impl PyBlackBoxModel {
     /// Return the number of potentail evaluations
     pub fn number_of_evaluations(&self) -> usize {
         self.inner.number_of_evaluations()
+    }
+
+    /// Return bash script suitable for execution.
+    #[pyo3(text_signature = "($self, mol)")]
+    pub fn bash_script_for_execution(&mut self, mol: &PyMolecule) -> Result<String> {
+        let s = self.inner.bash_script_for_execution(&mol.inner)?;
+        Ok(s)
     }
 }
 // a6cc3f1c ends here
