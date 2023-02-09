@@ -102,6 +102,14 @@ use gosh::model::{BlackBoxModel, ChemicalModel, Computed};
 #[pyo3(text_signature = "(dir)")]
 pub struct PyBlackBoxModel {
     inner: BlackBoxModel,
+    jobhub: Option<JobHub>,
+}
+
+impl PyBlackBoxModel {
+    fn get_jobhub(&mut self) -> Result<&mut JobHub> {
+        let jobhub = self.jobhub.as_mut().ok_or(anyhow!("no scheduler for lazy computation"))?;
+        Ok(jobhub)
+    }
 }
 
 #[pymethods]
@@ -110,7 +118,7 @@ impl PyBlackBoxModel {
     /// Construct BlackBoxModel model under directory context.
     pub fn from_dir(dir: String) -> Result<Self> {
         let inner = BlackBoxModel::from_dir(dir)?;
-        let s = Self { inner };
+        let s = Self { inner, jobhub: None };
         Ok(s)
     }
 
@@ -126,6 +134,40 @@ impl PyBlackBoxModel {
     pub fn compute(&mut self, mol: &PyMolecule) -> Result<PyComputed> {
         let inner = self.inner.compute(&mol.inner)?;
         Ok(PyComputed { inner })
+    }
+
+    /// Set job execution scheduler from address in `scheduler_address`.
+    #[pyo3(text_signature = "($self, scheduler_address)")]
+    pub fn set_job_scheduler(&mut self, scheduler_address: String) {
+        self.jobhub = JobHub::new(&scheduler_address).into();
+    }
+
+    /// Compute `mol` using this model for properties.
+    #[pyo3(text_signature = "($self, mol)")]
+    pub fn compute_lazily(&mut self, mol: &PyMolecule) -> Result<usize> {
+        let s = self.bash_script_for_execution(&mol)?;
+        let jobhub = self.get_jobhub()?;
+        let n = jobhub.add_job(s);
+        Ok(n)
+    }
+
+    /// Return computed result for job `jobid`
+    #[pyo3(text_signature = "($self, jobid)")]
+    pub fn get_computed_result(&mut self, jobid: usize) -> Result<PyComputed> {
+        use gosh::remote::docs::worker::ComputationResult;
+
+        let jobhub = self.get_jobhub()?;
+        let s = jobhub.get_job_out(jobid)?;
+        let inner = ComputationResult::get_computed_from_str(&s)?;
+        let r = PyComputed { inner };
+        Ok(r)
+    }
+
+    /// Compute all lazily scheduled jobs in parallel
+    pub fn compute_scheduled(&mut self) -> Result<()> {
+        let jobhub = self.get_jobhub()?;
+        jobhub.run()?;
+        Ok(())
     }
 
     /// Return the number of potentail evaluations
@@ -167,13 +209,6 @@ impl PyJobHub {
     #[staticmethod]
     pub fn num_threads() -> usize {
         JobHub::num_threads()
-    }
-
-    /// Set up number of threads for parallel run.
-    #[staticmethod]
-    pub fn set_num_threads(n: usize) -> Result<()> {
-        JobHub::set_num_threads(n)?;
-        Ok(())
     }
 
     /// Add a new job into job hub for scheduling.
