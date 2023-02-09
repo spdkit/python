@@ -97,6 +97,7 @@ impl PyComputed {
 
 // [[file:../spdkit-python.note::a6cc3f1c][a6cc3f1c]]
 use gosh::model::{BlackBoxModel, ChemicalModel, Computed};
+use gosh::remote::JobHub;
 
 #[pyclass(name = "BlackBoxModel", subclass)]
 #[pyo3(text_signature = "(dir)")]
@@ -154,11 +155,8 @@ impl PyBlackBoxModel {
     /// Return computed result for job `jobid`
     #[pyo3(text_signature = "($self, jobid)")]
     pub fn get_computed_result(&mut self, jobid: usize) -> Result<PyComputed> {
-        use gosh::remote::docs::worker::ComputationResult;
-
         let jobhub = self.get_jobhub()?;
-        let s = jobhub.get_job_out(jobid)?;
-        let inner = ComputationResult::get_computed_from_str(&s)?;
+        let inner = jobhub.get_computed_from_job_out(jobid)?;
         let r = PyComputed { inner };
         Ok(r)
     }
@@ -185,8 +183,6 @@ impl PyBlackBoxModel {
 // a6cc3f1c ends here
 
 // [[file:../spdkit-python.note::59752afa][59752afa]]
-use gosh::remote::JobHub;
-
 /// A job hub for parallel running of multiple jobs over remote
 /// computational nodes
 #[pyclass(name = "JobHub", subclass)]
@@ -213,14 +209,21 @@ impl PyJobHub {
 
     /// Add a new job into job hub for scheduling.
     #[pyo3(text_signature = "($self, cmd)")]
-    pub fn add_job(&mut self, cmd: String) {
-        self.inner.add_job(cmd);
+    pub fn add_job(&mut self, cmd: String) -> usize {
+        self.inner.add_job(cmd)
     }
 
     /// Run all scheduled jobs with nodes in pool.
     pub fn run(&mut self) -> Result<()> {
         self.inner.run()?;
         Ok(())
+    }
+
+    /// Return raw output for job `jobid`.
+    #[pyo3(text_signature = "($self, jobid)")]
+    pub fn get_job_out(&mut self, jobid: usize) -> Result<String> {
+        let s = self.inner.get_job_out(jobid)?;
+        Ok(s)
     }
 }
 // 59752afa ends here
