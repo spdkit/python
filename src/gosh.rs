@@ -102,15 +102,7 @@ impl PyComputed {
 #[pyo3(text_signature = "(dir)")]
 pub struct PyBlackBoxModel {
     inner: BlackBoxModel,
-    // jobhub: Option<JobHub>,
 }
-
-// impl PyBlackBoxModel {
-//     fn get_jobhub(&mut self) -> Result<&mut JobHub> {
-//         let jobhub = self.jobhub.as_mut().ok_or(anyhow!("no scheduler for lazy computation"))?;
-//         Ok(jobhub)
-//     }
-// }
 
 #[pymethods]
 impl PyBlackBoxModel {
@@ -135,37 +127,6 @@ impl PyBlackBoxModel {
         let inner = self.inner.compute(&mol.inner)?;
         Ok(PyComputed { inner })
     }
-
-    // /// Set job execution scheduler from address in `scheduler_address`.
-    // #[pyo3(text_signature = "($self, scheduler_address)")]
-    // pub fn set_job_scheduler(&mut self, scheduler_address: String) {
-    //     self.jobhub = JobHub::new(&scheduler_address).into();
-    // }
-
-    // /// Compute `mol` using this model for properties.
-    // #[pyo3(text_signature = "($self, mol)")]
-    // pub fn compute_lazily(&mut self, mol: &PyMolecule) -> Result<usize> {
-    //     let s = self.bash_script_for_execution(&mol)?;
-    //     let jobhub = self.get_jobhub()?;
-    //     let n = jobhub.add_job(s);
-    //     Ok(n)
-    // }
-
-    // /// Return computed result for job `jobid`
-    // #[pyo3(text_signature = "($self, jobid)")]
-    // pub fn get_computed_result(&mut self, jobid: usize) -> Result<PyComputed> {
-    //     let jobhub = self.get_jobhub()?;
-    //     let inner = jobhub.get_computed_from_job_out(jobid)?;
-    //     let r = PyComputed { inner };
-    //     Ok(r)
-    // }
-
-    // /// Compute all lazily scheduled jobs in parallel
-    // pub fn compute_scheduled(&mut self) -> Result<()> {
-    //     let jobhub = self.get_jobhub()?;
-    //     jobhub.run()?;
-    //     Ok(())
-    // }
 
     /// Return the number of potentail evaluations
     pub fn number_of_evaluations(&self) -> usize {
@@ -206,19 +167,27 @@ impl PyJobHub {
         JobHub::num_threads()
     }
 
-    /// Add a new `mol` into job hub scheduled for computation.
+    /// Add a new mol into job hub for later computation. Return
+    /// associated jobid which can be used to retrive computation
+    /// result.
     #[pyo3(text_signature = "($self, mol)")]
     pub fn add_job(&mut self, mol: PyMolecule) -> usize {
         self.inner.add_job(mol.inner)
     }
 
-    /// Run all scheduled jobs with nodes in pool.
+    /// Return the numbrer of pending jobs.
+    pub fn njobs(&self) -> usize {
+        self.inner.njobs()
+    }
+
+    /// Run all scheduled jobs with nodes in parallel. Call this method
+    /// will overwrite computed results and clear pending jobs.
     pub fn run(&mut self) -> Result<()> {
         self.inner.run()?;
         Ok(())
     }
 
-    /// Return raw output for job `jobid`.
+    /// Return computed result for job `jobid`.
     #[pyo3(text_signature = "($self, jobid)")]
     pub fn get_computed(&mut self, jobid: usize) -> Result<PyComputed> {
         let inner = self.inner.get_computed(jobid)?;
