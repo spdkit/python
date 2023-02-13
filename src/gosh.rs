@@ -196,6 +196,19 @@ impl PyJobHub {
 }
 // 59752afa ends here
 
+// [[file:../spdkit-python.note::d6a9828e][d6a9828e]]
+#[pyfunction]
+#[pyo3(signature = (mol, bbm, /, fmax=0.1, nmax=100))]
+#[pyo3(text_signature = "(mol, bbm, fmax=0.1, nmax=100)")]
+/// Optimize geometry of `mol` using potential provided by `bbm`.
+fn optimize(mol: &mut PyMolecule, bbm: &mut PyBlackBoxModel, fmax: f64, nmax: usize) -> Result<PyComputed> {
+    let optimized = gosh::optim::Optimizer::new(fmax, nmax).optimize_geometry(&mut mol.inner, &mut bbm.inner)?;
+    Ok(PyComputed {
+        inner: optimized.computed,
+    })
+}
+// d6a9828e ends here
+
 // [[file:../spdkit-python.note::83f2f6c1][83f2f6c1]]
 pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     let m = PyModule::new(py, name)?;
@@ -203,6 +216,7 @@ pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     m.add_class::<PyComputed>()?;
     m.add_class::<PyDbConnection>()?;
     m.add_class::<PyJobHub>()?;
+    m.add_function(wrap_pyfunction!(optimize, m)?)?;
     Ok(m)
 }
 // 83f2f6c1 ends here

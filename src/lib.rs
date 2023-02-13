@@ -50,7 +50,7 @@ impl PyAtom {
     /// Return atom label
     #[getter]
     pub fn label(&self) -> String {
-        self.inner.label().to_string()
+        self.inner.get_label().unwrap_or(self.inner.symbol()).to_owned()
     }
 
     /// Set atom label.
