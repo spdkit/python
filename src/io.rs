@@ -23,6 +23,13 @@ pub fn write(path: String, mols: Vec<PyMolecule>) -> PyResult<()> {
     gchemol::io::write(path, mols.iter().map(|mol| &mol.inner))?;
     Ok(())
 }
+
+/// Guess chemical file format from `path`
+#[pyfunction]
+pub fn guess_format_from_path(path: &str) -> Option<String> {
+    let fmt = gchemol::io::guess_format_from_path(path.as_ref())?;
+    Some(fmt)
+}
 // 4cfd5c0b ends here
 
 // [[file:../spdkit-python.note::377732f7][377732f7]]
@@ -351,6 +358,7 @@ pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     m.add_class::<OptimizationTrajactory>()?;
     m.add_function(wrap_pyfunction!(read, m)?)?;
     m.add_function(wrap_pyfunction!(write, m)?)?;
+    m.add_function(wrap_pyfunction!(guess_format_from_path, m)?)?;
 
     Ok(m)
 }

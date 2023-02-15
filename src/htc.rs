@@ -52,17 +52,8 @@ impl UserData {
         let mut mols = vec![];
 
         for (fname, source) in self.input_files.iter() {
-            // FIXME: guess format from file name
-            let fmt = if fname.ends_with(".cif") {
-                "text/cif"
-            } else if fname.ends_with(".xyz") {
-                "text/xyz"
-            } else if fname.ends_with(".mol2") {
-                "text/mol2"
-            } else {
-                unimplemented!("unkown {fname:?}");
-            };
-
+            let fmt =
+                gchemol::io::guess_format_from_path(fname.as_ref()).ok_or(anyhow!("not supported file format: {fname:?}"))?;
             let inner = Molecule::from_str(source, &fmt)?;
             mols.push(PyMolecule { inner });
         }
