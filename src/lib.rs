@@ -5,6 +5,7 @@ use pyo3::types::PyType;
 
 // [[file:../spdkit-python.note::787fe451][787fe451]]
 mod gosh;
+mod htc;
 mod io;
 // 787fe451 ends here
 
@@ -21,6 +22,7 @@ use gchemol::Atom;
 #[derive(Clone)]
 /// Atom is the smallest particle still characterizing a chemical element.
 #[pyo3(text_signature = "(symbol, position=[0, 0, 0])")]
+// #[pyo3(signature = (position = [0, 0, 0]))]
 pub struct PyAtom {
     inner: Atom,
 }
@@ -1108,6 +1110,10 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
 
     // gosh, database
     let s = gosh::new(py, "gosh")?;
+    m.add_submodule(s)?;
+
+    // htc, high throughput computation
+    let s = htc::new(py, "htc")?;
     m.add_submodule(s)?;
 
     // for ad-hoc experiments
