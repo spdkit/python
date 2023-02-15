@@ -62,7 +62,7 @@ impl PyTemplate {
 use gchemol_parser::TextViewer;
 
 /// A simple line-based text viewer for quick peeking part of text
-#[pyclass(name = "TextViwer", subclass)]
+#[pyclass(name = "TextViewer")]
 #[derive(Clone)]
 pub struct PyTextViewer {
     inner: TextViewer,

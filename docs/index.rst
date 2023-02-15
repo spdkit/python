@@ -1,0 +1,76 @@
+.. spdkit documentation master file, created by
+   sphinx-quickstart on Wed Feb 15 20:45:23 2023.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to spdkit's documentation!
+==================================
+.. autosummary::
+   :toctree: apiref
+
+    spdkit.Molecule
+    spdkit.Atom
+    spdkit.Lattice
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+.. automodule:: spdkit
+   :members:
+
+Chemical objects
+==================================
+.. autoclass:: spdkit.Molecule
+   :members:
+
+.. autoclass:: spdkit.Atom
+    :members:
+
+.. autoclass:: spdkit.Lattice
+    :members:
+
+Gosh
+==================================
+.. autoclass:: spdkit.gosh.BlackBoxModel
+   :members:
+
+.. autoclass:: spdkit.gosh.Computed
+   :members:
+
+.. autoclass:: spdkit.gosh.JobHub
+   :members:
+
+.. autoclass:: spdkit.gosh.DbConnection
+   :members:
+
+.. autofunction:: spdkit.gosh.optimize
+
+
+Read/write
+==================
+.. autoclass:: spdkit.io.GrepReader
+   :members:
+
+.. autoclass:: spdkit.io.TextViewer
+   :members:
+
+.. autoclass:: spdkit.io.OptimizationTrajactory
+   :members:
+
+.. autoclass:: spdkit.io.Template
+   :members:
+
+.. autofunction:: spdkit.io.read
+
+.. autofunction:: spdkit.io.write
+
+.. autofunction:: spdkit.io.guess_format_from_path
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
