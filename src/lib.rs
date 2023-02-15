@@ -5,7 +5,7 @@ use pyo3::types::PyType;
 
 // [[file:../spdkit-python.note::787fe451][787fe451]]
 mod gosh;
-mod htc;
+// mod htc;
 mod io;
 // 787fe451 ends here
 
@@ -1113,8 +1113,8 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_submodule(s)?;
 
     // htc, high throughput computation
-    let s = htc::new(py, "htc")?;
-    m.add_submodule(s)?;
+    // let s = htc::new(py, "htc")?;
+    // m.add_submodule(s)?;
 
     // for ad-hoc experiments
     let dwim = PyModule::new(py, "dwim")?;
