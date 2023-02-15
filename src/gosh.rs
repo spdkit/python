@@ -196,6 +196,11 @@ impl PyJobHub {
 }
 // 59752afa ends here
 
+// [[file:../spdkit-python.note::25f43dc1][25f43dc1]]
+use gosh::optim::optimize_geometry_iter;
+use gosh::optim::OptimizedIter;
+// 25f43dc1 ends here
+
 // [[file:../spdkit-python.note::d6a9828e][d6a9828e]]
 #[pyfunction]
 #[pyo3(signature = (mol, bbm, /, fmax=0.1, nmax=100))]

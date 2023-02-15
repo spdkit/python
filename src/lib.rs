@@ -5,7 +5,14 @@ use pyo3::types::PyType;
 
 // [[file:../spdkit-python.note::787fe451][787fe451]]
 mod gosh;
+mod io;
 // 787fe451 ends here
+
+// [[file:../spdkit-python.note::bac0eb10][bac0eb10]]
+mod common {
+    pub use gut::prelude::*;
+}
+// bac0eb10 ends here
 
 // [[file:../spdkit-python.note::95be1618][95be1618]]
 use gchemol::Atom;
@@ -1207,7 +1214,7 @@ pub struct PyInterpolation {
 #[pymethods]
 impl PyInterpolation {
     #[new]
-    #[args(r_cut = "4.0")]
+    #[pyo3(signature = (r_cut = 4.0))]
     pub fn new(r_cut: f64) -> Self {
         Self { r_cut }
     }
@@ -1413,6 +1420,10 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     io.add_class::<PyGrepReader>()?;
     io.add_class::<OptimizationTrajactory>()?;
     m.add_submodule(io)?;
+
+    // io
+    let s = io::new(py, "iox")?;
+    m.add_submodule(s)?;
 
     // gosh, database
     let s = gosh::new(py, "gosh")?;
