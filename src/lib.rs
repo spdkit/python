@@ -7,6 +7,7 @@ use pyo3::types::PyType;
 mod apps;
 mod gosh;
 mod io;
+mod utils;
 
 // mod htc;
 // 787fe451 ends here
@@ -221,31 +222,6 @@ impl PyLattice {
     }
 }
 // c8807c91 ends here
-
-// [[file:../spdkit-python.note::c400da41][c400da41]]
-#[pyfunction]
-#[pyo3(text_signature = "(level)")]
-/// Enable logging by setting verbosity level to `level`.
-pub fn set_verbosity(level: u8) {
-    let mut log = gut::cli::Verbosity::default();
-    log.set_verbosity(level);
-    log.setup_logger();
-}
-
-/// Parse a list of numbers from a readable string `s`.
-///
-/// "2-5"   ==> [2, 3, 4, 5]
-/// "1,3-5" ==> [1, 3, 4, 5]
-/// "1 3,5" ==> [1, 3, 4, 5]
-#[pyfunction]
-#[pyo3(text_signature = "(s)")]
-pub fn parse_numbers_human_readable(s: String) -> Result<Vec<usize>> {
-    use gut::utils::parse_numbers_human_readable;
-
-    let selected = parse_numbers_human_readable(&s)?;
-    Ok(selected)
-}
-// c400da41 ends here
 
 // [[file:../spdkit-python.note::ef13f019][ef13f019]]
 use gchemol::neighbors::{Neighbor, Neighborhood};
@@ -1103,8 +1079,10 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyAtom>()?;
     m.add_class::<PyLattice>()?;
     m.add_class::<PyInterpolation>()?;
-    m.add_function(wrap_pyfunction!(set_verbosity, m)?)?;
-    m.add_function(wrap_pyfunction!(parse_numbers_human_readable, m)?)?;
+
+    // utils
+    let s = utils::new(py, "utils")?;
+    m.add_submodule(s)?;
 
     // io
     let s = io::new(py, "io")?;
