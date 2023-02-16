@@ -4,9 +4,11 @@ use pyo3::types::PyType;
 // 0cbf1e93 ends here
 
 // [[file:../spdkit-python.note::787fe451][787fe451]]
+mod apps;
 mod gosh;
-// mod htc;
 mod io;
+
+// mod htc;
 // 787fe451 ends here
 
 // [[file:../spdkit-python.note::bac0eb10][bac0eb10]]
