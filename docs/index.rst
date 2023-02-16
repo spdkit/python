@@ -60,6 +60,20 @@ Read/write
 
 .. autofunction:: spdkit.io.guess_format_from_path
 
+Utils
+==================
+.. autofunction:: spdkit.utils.jmol_selection_commands
+
+.. autofunction:: spdkit.utils.set_verbosity
+
+.. autofunction:: spdkit.utils.abbreviate_numbers_human_readable
+
+.. autofunction:: spdkit.utils.parse_numbers_human_readable
+
+Surface
+==================
+.. autofunction:: spdkit.surface.probe_surface_atoms
+
 
 Reaction Path
 ==================

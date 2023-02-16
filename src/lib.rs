@@ -1085,6 +1085,10 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     let s = utils::new(py, "utils")?;
     m.add_submodule(s)?;
 
+    // surface
+    let s = surface::new(py, "surface")?;
+    m.add_submodule(s)?;
+
     // io
     let s = io::new(py, "io")?;
     m.add_submodule(s)?;

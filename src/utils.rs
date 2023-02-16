@@ -34,7 +34,7 @@ pub fn abbreviate_numbers_human_readable(s: Vec<usize>) -> Result<String> {
 }
 
 #[pyfunction]
-/// Show how to select atoms in jmol selection commands
+/// Show how to select atoms using commands in jmol script console.
 pub fn jmol_selection_commands(selected: Vec<usize>) {
     let selected = selected.iter().map(|x| x.to_string()).join(",");
     println!("selectionhalo");
