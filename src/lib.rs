@@ -8,6 +8,7 @@ mod apps;
 mod gosh;
 mod io;
 mod utils;
+mod surface;
 
 // mod htc;
 // 787fe451 ends here
