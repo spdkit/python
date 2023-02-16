@@ -5,14 +5,6 @@
 
 Welcome to spdkit's documentation!
 ==================================
-.. autosummary::
-   :toctree: apiref
-
-    spdkit.Molecule
-    spdkit.Atom
-    spdkit.Lattice
-
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -67,6 +59,12 @@ Read/write
 .. autofunction:: spdkit.io.write
 
 .. autofunction:: spdkit.io.guess_format_from_path
+
+
+Reaction Path
+==================
+.. autoclass:: spdkit.apps.ReactionPreview
+   :members:
 
 Indices and tables
 ==================

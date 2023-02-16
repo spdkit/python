@@ -1114,9 +1114,9 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     let s = gosh::new(py, "gosh")?;
     m.add_submodule(s)?;
 
-    // htc, high throughput computation
-    // let s = htc::new(py, "htc")?;
-    // m.add_submodule(s)?;
+    // apps, applications
+    let s = apps::new(py, "apps")?;
+    m.add_submodule(s)?;
 
     // for ad-hoc experiments
     let dwim = PyModule::new(py, "dwim")?;

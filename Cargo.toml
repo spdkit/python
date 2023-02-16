@@ -20,6 +20,7 @@ plotly = "0.8.3"
 tabled = "0.10.0"
 gosh = { version = "0.2.0", features = ["adhoc"] }
 serde_json = "1"
+rxview = {version="0.1", path = "../reaction-preview", features=["adhoc"]}
 
 [dev-dependencies]
 criterion = "0.4"
