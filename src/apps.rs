@@ -55,10 +55,41 @@ impl PyReactionPreview {
 }
 // 825e4aec ends here
 
+// [[file:../spdkit-python.note::55ce1aa4][55ce1aa4]]
+mod mhm {
+    use super::*;
+    use minima_hopping::{MinimaHopping, MinimaHoppingOptions};
+    use pyo3::types::PyDict;
+
+    #[pyclass(name = "MinimaHopping", subclass)]
+    pub struct PyMinimaHopping {
+        options: MinimaHoppingOptions,
+    }
+
+    #[pymethods]
+    impl PyMinimaHopping {
+        #[staticmethod]
+        #[pyo3(signature = (mol, bbm_dir, out, /, **options))]
+        fn run(mol: &mut PyMolecule, bbm_dir: &str, out: &str, options: Option<&PyDict>) -> Result<()> {
+            let mhm_options = if let Some(options) = options {
+                pythonize::depythonize(options.as_ref())?
+            } else {
+                MinimaHoppingOptions::default()
+            };
+            mhm_options.validate()?;
+            let mut mhm = MinimaHopping::new(mhm_options);
+            mhm.run(&mut mol.inner, bbm_dir.as_ref(), out)?;
+            Ok(())
+        }
+    }
+}
+// 55ce1aa4 ends here
+
 // [[file:../spdkit-python.note::9d891d5f][9d891d5f]]
 pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     let m = PyModule::new(py, name)?;
     m.add_class::<PyReactionPreview>()?;
+    m.add_class::<mhm::PyMinimaHopping>()?;
     // m.add_function(wrap_pyfunction!(read, m)?)?;
 
     Ok(m)
