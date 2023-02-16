@@ -26,6 +26,14 @@ pub fn parse_numbers_human_readable(s: String) -> Result<Vec<usize>> {
 }
 
 #[pyfunction]
+/// Make an abbreviation of the long number list. Return the string
+/// representation. For example: 1,2,3,6,7,8,9 ==> 1-3,6-9
+pub fn abbreviate_numbers_human_readable(s: Vec<usize>) -> Result<String> {
+    let selection = gut::utils::abbreviate_numbers_human_readable(&s)?;
+    Ok(selection)
+}
+
+#[pyfunction]
 /// Show how to select atoms in jmol selection commands
 pub fn jmol_selection_commands(selected: Vec<usize>) {
     let selected = selected.iter().map(|x| x.to_string()).join(",");
@@ -39,9 +47,9 @@ pub fn jmol_selection_commands(selected: Vec<usize>) {
 pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     let m = PyModule::new(py, name)?;
     // m.add_class::<PyTemplate>()?;
-    m.add_function(wrap_pyfunction!(probe_surface_atoms, m)?)?;
     m.add_function(wrap_pyfunction!(set_verbosity, m)?)?;
     m.add_function(wrap_pyfunction!(parse_numbers_human_readable, m)?)?;
+    m.add_function(wrap_pyfunction!(abbreviate_numbers_human_readable, m)?)?;
     m.add_function(wrap_pyfunction!(jmol_selection_commands, m)?)?;
 
     Ok(m)
