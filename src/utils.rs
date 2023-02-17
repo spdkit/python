@@ -41,6 +41,21 @@ pub fn jmol_selection_commands(selected: Vec<usize>) {
     println!("select none");
     println!("select atomno=[{selected}]");
 }
+
+#[pyfunction]
+/// Show how to select atoms using commands in pymol.
+pub fn pymol_selection_commands(selected: Vec<usize>) {
+    let selected = selected.iter().map(|x| x.to_string()).join("+");
+    println!("select selection, id {selected}");
+}
+
+#[pyfunction]
+/// Show codes to select atoms using GaussView
+fn gaussview_selection_commands(selected: Vec<usize>) -> Result<()> {
+    info!("Open Atom Selection dialog, and input the following code");
+    println!("{}", gut::utils::abbreviate_numbers_human_readable(selected.as_slice())?);
+    Ok(())
+}
 // 4c0ea8d1 ends here
 
 // [[file:../spdkit-python.note::0853f16f][0853f16f]]
@@ -51,6 +66,8 @@ pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     m.add_function(wrap_pyfunction!(parse_numbers_human_readable, m)?)?;
     m.add_function(wrap_pyfunction!(abbreviate_numbers_human_readable, m)?)?;
     m.add_function(wrap_pyfunction!(jmol_selection_commands, m)?)?;
+    m.add_function(wrap_pyfunction!(pymol_selection_commands, m)?)?;
+    m.add_function(wrap_pyfunction!(gaussview_selection_commands, m)?)?;
 
     Ok(m)
 }
