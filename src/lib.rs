@@ -783,6 +783,13 @@ impl PyMolecule {
         self.inner.fingerprint()
     }
     
+    /// Calculate disparity between `self` and `mol` using algorithm
+    /// proposed by Lazauskas et al (DOI:10.1039/C6NR09072A)
+    pub fn disparity_between(&self, mol: &PyMolecule) -> f64 {
+        use spdkit::prelude::SimilarityExt;
+        self.inner.disparity_between(&mol.inner)
+    }
+    
     /// This is an operation of reordering the atoms in a way that does not depend
     /// on where they were before. The bonding graph is important for this
     /// operation.
