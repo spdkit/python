@@ -34,6 +34,7 @@ pub fn guess_format_from_path(path: &str) -> Option<String> {
 
 // [[file:../spdkit-python.note::377732f7][377732f7]]
 use gchemol::io::Template;
+use pyo3::types::PyDict;
 
 #[pyclass(name = "Template")]
 /// Template rendering using minijinja
@@ -43,6 +44,17 @@ pub struct PyTemplate {
 
 #[pymethods]
 impl PyTemplate {
+    /// Render template using vars from keyword arguments
+    #[pyo3(signature = (**keywords))]
+    fn render(&self, keywords: Option<&PyDict>) -> Result<String> {
+        let s = Python::with_gil(|py| -> PyResult<String> {
+            let json = py.import("json")?;
+            let s = json.call_method1("dumps", (keywords,))?;
+            s.extract()
+        })?;
+        Ok(self.inner.render_json(&s)?)
+    }
+
     /// Render template as string using vars from `json`.
     fn render_json(&self, json: &str) -> Result<String> {
         let s = self.inner.render_json(json)?;
