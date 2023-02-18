@@ -22,11 +22,24 @@ pub fn probe_surface_atoms(mol: &PyMolecule, r_cutoff: f64, n_probes: usize) -> 
 }
 // 45f23185 ends here
 
+// [[file:../spdkit-python.note::3b89501f][3b89501f]]
+#[pyfunction]
+#[pyo3(signature = (mol, /, probe_element="C", maxcycle=1000))]
+#[pyo3(text_signature = "(mol, /, probe_element='C', n_probes=1000)")]
+pub fn probe_adsorption_sites(mol: &PyMolecule, probe_element: &str, maxcycle: usize) -> Result<Vec<PyMolecule>> {
+    use ::surface::docs::surface::probe_adsorption_sites;
+    let probed = probe_adsorption_sites(&mol.inner, probe_element, maxcycle)?;
+    let probed = probed.into_iter().map(|inner| PyMolecule { inner }).collect();
+    Ok(probed)
+}
+// 3b89501f ends here
+
 // [[file:../spdkit-python.note::4b881b59][4b881b59]]
 pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     let m = PyModule::new(py, name)?;
     // m.add_class::<PyTemplate>()?;
     m.add_function(wrap_pyfunction!(probe_surface_atoms, m)?)?;
+    m.add_function(wrap_pyfunction!(probe_adsorption_sites, m)?)?;
 
     Ok(m)
 }

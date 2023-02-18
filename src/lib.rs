@@ -660,11 +660,19 @@ impl PyMolecule {
         Ok(n)
     }
     
+    #[pyo3(signature = (ignore_pbc=false))]
+    #[pyo3(text_signature = "(ignore_pbc=False)")]
     /// Recalculates all bonds in molecule based on interatomic
     /// distances and covalent radii. For periodic system, the bonds
     /// are determined by applying miniumu image convention.
-    pub fn rebond(&mut self) {
-        self.inner.rebond();
+    pub fn rebond(&mut self, ignore_pbc: bool) {
+        if ignore_pbc && self.inner.is_periodic() {
+            let lat = self.inner.unbuild_crystal().unwrap();
+            self.inner.rebond();
+            self.inner.set_lattice(lat);
+        } else {
+            self.inner.rebond();
+        }
     }
     
     /// Removes all existing bonds between atoms.
