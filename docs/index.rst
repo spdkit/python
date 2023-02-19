@@ -73,6 +73,7 @@ Utils
 Surface
 ==================
 .. autofunction:: spdkit.surface.probe_surface_atoms
+.. autofunction:: spdkit.surface.probe_adsorption_sites
 
 
 Reaction Path
