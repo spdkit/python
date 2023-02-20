@@ -9,7 +9,6 @@ use super::{PyMolecule, PyMoleculeIter};
 #[pyfunction]
 /// Read a list of `Molecule` from `path`. Returns an iterator over
 /// `Molecule`, which allows reading a large file out of memory.
-#[pyo3(text_signature = "(path)")]
 pub fn read(path: String) -> PyResult<PyMoleculeIter> {
     let mols = gchemol::io::read(path)?.map(|inner| PyMolecule { inner });
     let mols = PyMoleculeIter { iter: Box::new(mols) };
@@ -18,7 +17,6 @@ pub fn read(path: String) -> PyResult<PyMoleculeIter> {
 
 /// Write molecules into path. File format will be determined according to the path.
 #[pyfunction]
-#[pyo3(text_signature = "(path, mols)")]
 pub fn write(path: String, mols: Vec<PyMolecule>) -> PyResult<()> {
     gchemol::io::write(path, mols.iter().map(|mol| &mol.inner))?;
     Ok(())
@@ -139,7 +137,6 @@ impl PyTextViewer {
 
     /// Move the cursor to the line matching `pattern`. Regex pattern
     /// is allowed.
-    #[pyo3(text_signature = "($self, pattern)")]
     pub fn search_forward(&mut self, pattern: String) -> PyResult<usize> {
         let n = self.inner.search_forward(&pattern)?;
         Ok(n)
@@ -147,26 +144,22 @@ impl PyTextViewer {
 
     /// Search backward from current point for `pattern`. Return
     /// current point after search.
-    #[pyo3(text_signature = "($self, pattern)")]
     pub fn search_backward(&mut self, pattern: String) -> PyResult<usize> {
         let n = self.inner.search_backward(&pattern)?;
         Ok(n)
     }
 
     /// Peek line `n`.
-    #[pyo3(text_signature = "($self, n)")]
     pub fn peek_line(&self, n: usize) -> String {
         self.inner.peek_line(n).to_owned()
     }
 
     /// Peek the text between line `n` and `m` (including line `m`)
-    #[pyo3(text_signature = "($self, n, m)")]
     pub fn peek_lines(&self, n: usize, m: usize) -> String {
         self.inner.peek_lines(n, m).to_owned()
     }
 
     /// Select the next `n` lines from current point, including current line.
-    #[pyo3(text_signature = "($self, n)")]
     pub fn selection(&self, n: usize) -> String {
         self.inner.selection(n).to_owned()
     }
@@ -174,14 +167,13 @@ impl PyTextViewer {
     /// Select part of the string in next `n` lines (including
     /// currrent line), in a rectangular area surrounded by columns in
     /// `col_beg`--`col_end`.
-    #[pyo3(text_signature = "($self, n, col_beg, col_end)")]
     pub fn column_selection(&self, n: usize, col_beg: usize, col_end: usize) -> String {
         self.inner.column_selection(n, col_beg, col_end)
     }
 }
 // c50e479a ends here
 
-// [[file:../spdkit-python.note::*grep reader][grep reader:1]]
+// [[file:../spdkit-python.note::048fa298][048fa298]]
 use gchemol_parser::GrepReader;
 
 /// Quick grep text by marking the line that matching a pattern,
@@ -232,7 +224,6 @@ impl PyGrepReader {
 
     /// Goto the marked position in `marker_index`. Will panic if marker_index
     /// out of range.
-    #[pyo3(text_signature = "($self, marker_index)")]
     pub fn goto_marker(&mut self, marker_index: isize) -> PyResult<u64> {
         let i = if marker_index < 0 {
             self.inner.num_markers() as isize + marker_index
@@ -245,7 +236,6 @@ impl PyGrepReader {
 
     /// Return `n` lines in string on success from current
     /// position. Return error if reached EOF early.
-    #[pyo3(text_signature = "($self, n)")]
     pub fn read_lines(&mut self, n: usize) -> PyResult<String> {
         let mut s = String::new();
         self.inner.read_lines(n, &mut s)?;
@@ -254,7 +244,6 @@ impl PyGrepReader {
 
     /// View next `n` lines like in a normal text viewer. This method
     /// will forward the cursor by `n` lines.
-    #[pyo3(text_signature = "($self, n)")]
     pub fn view_lines(&mut self, n: usize) -> PyResult<PyTextViewer> {
         let inner = self.inner.view_lines(n)?;
         Ok(PyTextViewer { inner })
@@ -262,7 +251,6 @@ impl PyGrepReader {
 
     /// Return text from current position to the next marker or file
     /// end. It method will forward the cursor to the next marker.
-    #[pyo3(text_signature = "($self)")]
     pub fn read_until_next_marker(&mut self) -> PyResult<String> {
         let mut s = String::new();
         self.inner.read_until_next_marker(&mut s)?;
@@ -271,13 +259,12 @@ impl PyGrepReader {
 
     /// View all lines until next marker like in a normal text viewer.
     /// It method will forward the cursor to the next marker.
-    #[pyo3(text_signature = "($self)")]
     pub fn view_until_next_marker(&mut self) -> PyResult<PyTextViewer> {
         let inner = self.inner.view_until_next_marker()?;
         Ok(PyTextViewer { inner })
     }
 }
-// grep reader:1 ends here
+// 048fa298 ends here
 
 // [[file:../spdkit-python.note::d5cde32b][d5cde32b]]
 fn plot_3d(z: Vec<Vec<f64>>, x: Vec<f64>, y: Vec<f64>) {

@@ -140,20 +140,17 @@ impl PyLattice {
 
     /// Construct lattice from lattice parameters Unit cell angles in degrees, lengths in Angstrom
     #[staticmethod]
-    #[pyo3(text_signature = "($self, a, b, c, alpha, beta, gamma, /)")]
     pub fn from_params(a: f64, b: f64, c: f64, alpha: f64, beta: f64, gamma: f64) -> Self {
         let inner = Lattice::from_params(a, b, c, alpha, beta, gamma);
         Self { inner }
     }
 
     /// Returns the fractional coordinates given cartesian coordinates.
-    #[pyo3(text_signature = "($self, p, /)")]
     pub fn to_frac(&self, p: [f64; 3]) -> [f64; 3] {
         self.inner.to_frac(p).into()
     }
 
     /// Returns the cartesian coordinates given fractional coordinates.
-    #[pyo3(text_signature = "($self, p, /)")]
     pub fn to_cart(&self, p: [f64; 3]) -> [f64; 3] {
         self.inner.to_cart(p).into()
     }
@@ -161,7 +158,6 @@ impl PyLattice {
     /// Wrap point `p` in Cartesian coordinates into unit cell,
     /// obeying the periodic boundary conditions. Returns cartesian
     /// coordinates.
-    #[pyo3(text_signature = "($self, p, /)")]
     pub fn wrap(&self, p: [f64; 3]) -> [f64; 3] {
         self.inner.wrap(p).into()
     }
@@ -169,13 +165,11 @@ impl PyLattice {
     /// Wrap point `p` in fractional coordinates into unit cell,
     /// obeying the periodic boundary conditions. Returns fractional
     /// coordinates.
-    #[pyo3(text_signature = "($self, p, /)")]
     pub fn wrap_frac(&self, p: [f64; 3]) -> [f64; 3] {
         self.inner.wrap_frac(p).into()
     }
 
     /// Return the shortest vector obeying the minimum image convention.
-    #[pyo3(text_signature = "($self, p, /)")]
     pub fn apply_mic(&self, p: [f64; 3]) -> [f64; 3] {
         self.inner.apply_mic(p).into()
     }
@@ -201,7 +195,6 @@ impl PyLattice {
     /// Return the shortest distance between pi (point i) and the
     /// periodic images of pj (point j) under the minimum image
     /// convention
-    #[pyo3(text_signature = "($self, pi, pj, /)")]
     pub fn distance(&self, pi: [f64; 3], pj: [f64; 3]) -> f64 {
         self.inner.distance(pi, pj).into()
     }
@@ -291,7 +284,6 @@ impl PyNeighborProbe {
     /// # Parameters
     /// * p: the Cartesian position or probe
     /// * r_cutoff: the cutoff distance for searching neighbors
-    #[pyo3(text_signature = "($self, p, r_cutoff, /)")]
     pub fn search(&self, p: [f64; 3], r_cutoff: f64) -> Vec<PyNeighbor> {
         self.inner
             .search(p, r_cutoff)
@@ -300,7 +292,6 @@ impl PyNeighborProbe {
     }
 
     /// Return an iterator of the nodes connected to the node `n`.
-    #[pyo3(text_signature = "($self, n, r_cutoff, /)")]
     pub fn neighbors(&self, n: usize, r_cutoff: f64) -> Vec<PyNeighbor> {
         self.inner.neighbors(n, r_cutoff).map(|inner| PyNeighbor { inner }).collect()
     }
@@ -351,7 +342,6 @@ impl PyMolecule {
 
     #[staticmethod]
     /// Build a molecule from atoms associated with serial numbers from 1.
-    #[pyo3(text_signature = "($self, atoms, /)")]
     pub fn from_atoms(atoms: Vec<PyAtom>) -> Self {
         let inner = Molecule::from_atoms(atoms.into_iter().map(|m| m.inner));
         Self { inner }
@@ -393,7 +383,6 @@ impl PyMolecule {
 
     /// Write molecule to file with `path`. The molecule format will
     /// be determined based on file name extension.
-    #[pyo3(text_signature = "($self, path, /)")]
     pub fn to_file(&self, path: String) -> PyResult<()> {
         self.inner.to_file(&path)?;
         Ok(())
@@ -401,7 +390,6 @@ impl PyMolecule {
 
     /// Render molecule with template file from `path`. On success,
     /// return the formatted string.
-    #[pyo3(text_signature = "($self, path, /)")]
     pub fn render_with(&self, path: String) -> PyResult<String> {
         let s = self.inner.render_with(path.as_ref())?;
         Ok(s)
@@ -430,7 +418,6 @@ impl PyMolecule {
     ///
     /// NOTE: padding has to be large enough (> 0.5) to avoid self
     /// interaction with its periodic mirror.
-    #[pyo3(text_signature = "($self, padding, /)")]
     pub fn set_lattice_from_bounding_box(&mut self, padding: f64) -> PyResult<()> {
         self.inner.set_lattice_from_bounding_box(padding);
         Ok(())
@@ -443,7 +430,6 @@ impl PyMolecule {
     /// * sa, sb, sc: an sequence of three scaling factors. E.g., [2,
     /// 1, 1] specifies that the supercell should have dimensions 2a x
     /// b x c
-    #[pyo3(text_signature = "($self, sa, sb, sc, /)")]
     pub fn supercell(&mut self, sa: usize, sb: usize, sc: usize) -> PyResult<Self> {
         if let Some(mol) = self.inner.supercell(sa, sb, sc) {
             let m = Self { inner: mol };
@@ -456,7 +442,6 @@ impl PyMolecule {
     /// Return the distance between atom i and atom j. For periodic
     /// structure, this method will return the distance under the
     /// minimum image convention.
-    #[pyo3(text_signature = "($self, i, j, /)")]
     pub fn distance(&self, i: usize, j: usize) -> PyResult<f64> {
         let d = self
             .inner
@@ -467,7 +452,6 @@ impl PyMolecule {
 
     /// Return the angle between atoms `i`, `j`, `k` in degrees,
     /// irrespective periodic images.
-    #[pyo3(text_signature = "($self, i, j, k, /)")]
     pub fn angle(&self, i: usize, j: usize, k: usize) -> PyResult<f64> {
         let d = self
             .inner
@@ -479,7 +463,6 @@ impl PyMolecule {
 
     /// Return the torsion angle between atoms `i`, `j`, `k`, `l` in
     /// degrees, irrespective periodic images.
-    #[pyo3(text_signature = "($self, i, j, k, l, /)")]
     pub fn torsion(&self, i: usize, j: usize, k: usize, l: usize) -> PyResult<f64> {
         let d = self
             .inner
@@ -509,7 +492,6 @@ impl PyMolecule {
 
     /// Set freezing flag to `freezed` for atoms in `selection`,
     /// useful for optimization or dynamic simulation.
-    #[pyo3(text_signature = "($self, selection, freezed, /)")]
     pub fn freeze_atoms(&mut self, selection: Selection, freezed: bool) -> PyResult<()> {
         for sn in selection.try_into_list()? {
             if let Some(a) = self.inner.get_atom_mut(sn) {
@@ -523,7 +505,6 @@ impl PyMolecule {
 
     /// Get ONIOM layer of atom `sn`. If no layer information was set,
     /// will return `H`.
-    #[pyo3(text_signature = "($self, sn, /)")]
     pub fn get_oniom_layer(&self, sn: usize) -> PyResult<String> {
         use gchemol::io::formats::GaussianInputFile;
 
@@ -538,7 +519,6 @@ impl PyMolecule {
 
     /// Set ONIOM layer of atom `sn` to `layer` for Gaussian
     /// calculation. Possible layer includes `H`, `M`, `L`
-    #[pyo3(text_signature = "($self, sn, layer, /)")]
     pub fn set_oniom_layer(&mut self, sn: usize, layer: &str) -> PyResult<()> {
         use gchemol::io::formats::GaussianInputFile;
 
@@ -553,7 +533,6 @@ impl PyMolecule {
     }
 
     /// Find rings up to `nmax` atoms in `Molecule`.
-    #[pyo3(text_signature = "($self, namx, /)")]
     pub fn find_rings(&mut self, nmax: usize) -> PyResult<Vec<std::collections::HashSet<usize>>> {
         let rings = self.inner.find_rings(nmax);
         Ok(rings)
@@ -579,7 +558,6 @@ impl PyMolecule {
 
     /// Access the atom copy by atom serial number `n`. Return None if
     /// serial number `n` invalid.
-    #[pyo3(text_signature = "($self, n, /)")]
     pub fn get_atom(&self, n: usize) -> Option<PyAtom> {
         let inner = self.inner.get_atom(n)?.clone();
         PyAtom { inner }.into()
@@ -587,14 +565,12 @@ impl PyMolecule {
     
     /// Add atom a into molecule. If Atom numbered as a already exists in
     /// molecule, then the associated Atom will be updated with atom.
-    #[pyo3(text_signature = "($self, n, atom, /)")]
     pub fn add_atom(&mut self, n: usize, atom: PyAtom) {
         self.inner.add_atom(n, atom.inner)
     }
     
     /// Remove Atom a from Molecule. Return the removed Atom on success,
     /// and return None if Atom a does not exist.
-    #[pyo3(text_signature = "($self, n, /)")]
     pub fn remove_atom(&mut self, n: usize) -> Option<PyAtom> {
         let inner = self.inner.remove_atom(n)?;
         PyAtom { inner }.into()
@@ -602,7 +578,6 @@ impl PyMolecule {
     
     /// Remove atoms in `selection` from Molecule. Return the removed
     /// atoms on success, and return None if any atom does not exist.
-    #[pyo3(text_signature = "($self, selection, /)")]
     pub fn remove_atoms(&mut self, selection: Selection) -> Option<Vec<PyAtom>> {
         let mut removed = vec![];
         for n in selection.try_into_list().ok()? {
@@ -616,7 +591,6 @@ impl PyMolecule {
     /// Return a sub molecule induced by `atoms` in parent
     /// molecule. Return None if atom serial numbers are
     /// invalid. Return an empty Molecule if `atoms` empty.
-    #[pyo3(text_signature = "($self, atoms)")]
     pub fn get_sub_molecule(&self, atoms: Selection) -> Option<Self> {
         let atoms = atoms.try_into_list().ok()?;
         let inner = self.inner.get_sub_molecule(&atoms)?;
@@ -624,7 +598,6 @@ impl PyMolecule {
     }
 
     /// Set periodic lattice.
-    #[pyo3(text_signature = "($self, lat)")]
     pub fn set_lattice(&mut self, lat: PyLattice) {
         self.inner.set_lattice(lat.inner);
     }
@@ -743,7 +716,6 @@ impl PyMolecule {
     ///
     /// # NOTE
     /// * This method will cause serial numbers renumbered from 1.
-    #[pyo3(text_signature = "($self, keys, /)")]
     pub fn reorder(&mut self, keys: Vec<usize>) {
         self.inner.reorder(&keys);
     }
@@ -755,12 +727,12 @@ impl PyMolecule {
     /// * The atoms must be in one-to-one mapping with atoms in `mol_ref`
     /// * The structure could be mirrored for better alignment.
     /// * Heavy atoms have more weights.
+    #[pyo3(signature = (mol_ref, /, selection = None))]
     #[pyo3(text_signature = "($self, mol_ref, /, selection = None)")]
     pub fn superimpose_onto(&mut self, mol_ref: Self, selection: Option<Selection>) -> PyResult<f64> {
         let rmsd = if let Some(selected) = selection {
             let s = selected.try_into_list()?;
-            self.inner
-                .superimpose_onto(&mol_ref.inner, Some(&s))
+            self.inner.superimpose_onto(&mol_ref.inner, Some(&s))
         } else {
             self.inner.superimpose_onto(&mol_ref.inner, None)
         };
@@ -825,7 +797,6 @@ impl PyMolecule {
     /// Construct `Molecule` object from a file `path`. If the file
     /// contains multiple molecules, only the last one will be read.
     #[staticmethod]
-    #[pyo3(text_signature = "($self, path, /)")]
     pub fn from_file(path: String) -> PyResult<Self> {
         let inner = Molecule::from_file(&path)?;
         // let instance = cls.call0()?;
@@ -837,7 +808,6 @@ impl PyMolecule {
     /// format `fmt`. Possible fmt includes `text/xyz`, `text/pxyz`,
     /// `vasp/input` etc.
     #[staticmethod]
-    #[pyo3(text_signature = "($self, src, fmt)")]
     pub fn from_string(src: String, fmt: String) -> PyResult<Self> {
         let inner = Molecule::from_str(&src, &fmt)?;
         Ok(Self { inner })
@@ -853,13 +823,11 @@ impl PyMolecule {
     /// the center atom `m`
     ///
     /// Note: the center atom m is put last in returned molecule.
-    #[pyo3(text_signature = "($self, m, n, /)")]
     fn selection_by_expanding_bond(&self, m: usize, n: usize) -> Vec<usize> {
         self.inner.selection_by_expanding_bond(m, n)
     }
     
     /// Return selected atoms by cutoff distance `r` nearby central atom `n`
-    #[pyo3(text_signature = "($self, n, r, /)")]
     fn selection_by_distance(&self, n: usize, r: f64) -> Vec<usize> {
         self.inner.selection_by_distance(n, r)
     }
@@ -973,7 +941,7 @@ use distances::Interpolation;
 /// * r_cut: probe cutoff radius for nearest neighbours.
 #[derive(Clone)]
 #[pyclass(name = "Interpolation", subclass)]
-#[pyo3(text_signature = "(r_cut)")]
+#[pyo3(text_signature = "(r_cut=4.0)")]
 pub struct PyInterpolation {
     r_cut: f64,
 }
@@ -1031,7 +999,6 @@ impl PyChemicalEnvironment {
     }
 
     /// Reshape the structure of Molecule mol using probed coordination environment.
-    #[pyo3(text_signature = "($self, mol)")]
     pub fn reshape(&self, mol: &mut PyMolecule) -> usize {
         self.inner.reshape(&mut mol.inner)
     }
@@ -1039,32 +1006,27 @@ impl PyChemicalEnvironment {
     /// Set parent `Molecule` to `mol`.  Molecule `mol` may have
     /// differnt 3D structure, but must share the same numbering
     /// system with its parent molecule.
-    #[pyo3(text_signature = "($self, mol)")]
     pub fn reparent(&mut self, mol: PyMolecule) {
         self.inner.reparent(mol.inner)
     }
 
     /// Update elastic constrains from `mol`, which maintaining original connectivity.
-    #[pyo3(text_signature = "($self, mol)")]
     pub fn update_constrains_from(&mut self, mol: &PyMolecule) -> Result<()> {
         self.inner.update_constrains_from(&mol.inner)?;
         Ok(())
     }
 
     /// Return distance constraint between node `u` and `v`.
-    #[pyo3(text_signature = "($self, u, v)")]
     pub fn get_distance_constraint(&self, u: usize, v: usize) -> Option<f64> {
         self.inner.get_distance_constraint(u, v)
     }
 
     /// Constrain distance `u--v` to `d` when refinement.
-    #[pyo3(text_signature = "($self, u, v, d)")]
     pub fn set_distance_constraint(&mut self, u: usize, v: usize, d: f64) {
         self.inner.set_distance_constraint(u, v, d)
     }
 
     /// Create central molecule from atom `i` with direct neighbors.
-    #[pyo3(text_signature = "($self, i)")]
     pub fn create_central_molecule(&self, i: usize, mol_alt: Option<PyMolecule>) -> Option<PyMolecule> {
         let inner = self.inner.create_central_molecule(i, mol_alt.map(|m| m.inner).as_ref())?;
         let m = PyMolecule { inner };
@@ -1078,7 +1040,6 @@ impl PyChemicalEnvironment {
     }
 
     /// Update immediate constraints of atom `i` from `mol`.
-    #[pyo3(text_signature = "($self, mol, i)")]
     pub fn update_constraints_for_center_from(&mut self, mol_a: PyMolecule, mol_b: PyMolecule, i: usize) -> Result<()> {
         self.inner.update_constraints_for_center_from(&mol_a.inner, &mol_b.inner, i)?;
         Ok(())

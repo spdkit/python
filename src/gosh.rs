@@ -115,14 +115,12 @@ impl PyBlackBoxModel {
     }
 
     /// Render `mol` to input string using this template.
-    #[pyo3(text_signature = "($self, mol)")]
     pub fn render_input(&self, mol: PyMolecule) -> Result<String> {
         let r = self.inner.render_input(&mol.inner)?;
         Ok(r)
     }
 
     /// Compute `mol` using this model for properties.
-    #[pyo3(text_signature = "($self, mol)")]
     pub fn compute(&mut self, mol: &PyMolecule) -> Result<PyComputed> {
         let inner = self.inner.compute(&mol.inner)?;
         Ok(PyComputed { inner })
@@ -134,7 +132,6 @@ impl PyBlackBoxModel {
     }
 
     /// Return bash script suitable for execution.
-    #[pyo3(text_signature = "($self, mol)")]
     pub fn bash_script_for_execution(&mut self, mol: &PyMolecule) -> Result<String> {
         let s = self.inner.bash_script_for_execution(&mol.inner)?;
         Ok(s)
@@ -170,7 +167,6 @@ impl PyJobHub {
     /// Add a new mol into job hub for later computation. Return
     /// associated jobid which can be used to retrive computation
     /// result.
-    #[pyo3(text_signature = "($self, mol)")]
     pub fn add_job(&mut self, mol: PyMolecule) -> usize {
         self.inner.add_job(mol.inner)
     }
@@ -188,7 +184,6 @@ impl PyJobHub {
     }
 
     /// Return computed result for job `jobid`.
-    #[pyo3(text_signature = "($self, jobid)")]
     pub fn get_computed(&mut self, jobid: usize) -> Result<PyComputed> {
         let inner = self.inner.get_computed(jobid)?;
         Ok(PyComputed { inner })
