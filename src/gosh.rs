@@ -158,35 +158,26 @@ impl PyJobHub {
         Self { inner }
     }
 
-    /// Return the number of parallel threads.
-    #[staticmethod]
-    pub fn num_threads() -> usize {
-        JobHub::num_threads()
-    }
-
-    /// Add a new mol into job hub for later computation. Return
-    /// associated jobid which can be used to retrive computation
-    /// result.
-    pub fn add_job(&mut self, mol: PyMolecule) -> usize {
-        self.inner.add_job(mol.inner)
-    }
-
-    /// Return the numbrer of pending jobs.
-    pub fn njobs(&self) -> usize {
-        self.inner.njobs()
-    }
-
     /// Run all scheduled jobs with nodes in parallel. Call this method
     /// will overwrite computed results and clear pending jobs.
-    pub fn run(&mut self) -> Result<()> {
-        self.inner.run()?;
-        Ok(())
+    pub fn compute_molecules(&self, mols: Vec<PyMolecule>) -> Result<Vec<PyComputed>> {
+        let mols: Vec<_> = mols.into_iter().map(|m| m.inner).collect();
+        let all = self
+            .inner
+            .compute_molecules(&mols)?
+            .into_iter()
+            .map(|inner| PyComputed { inner })
+            .collect();
+        Ok(all)
     }
 
-    /// Return computed result for job `jobid`.
-    pub fn get_computed(&mut self, jobid: usize) -> Result<PyComputed> {
-        let inner = self.inner.get_computed(jobid)?;
-        Ok(PyComputed { inner })
+    /// Execute cmds remotely with nodes in pool. The cmds are a vec
+    /// of tuple in (cmd, pwd), where cmd is the command line to
+    /// execute, and pwd is the working directory.
+    pub fn execute_commands(&self, cmds: Vec<(String, String)>) -> Result<Vec<String>> {
+        let cmds: Vec<_> = cmds.into_iter().map(|(cmd, pwd)| (cmd, pwd.into())).collect();
+        let all = self.inner.execute_commands(&cmds)?;
+        Ok(all)
     }
 }
 // 59752afa ends here
