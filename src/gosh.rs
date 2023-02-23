@@ -140,6 +140,9 @@ impl PyBlackBoxModel {
 // a6cc3f1c ends here
 
 // [[file:../spdkit-python.note::59752afa][59752afa]]
+use gchemol::io::prelude::*;
+use gchemol::Molecule;
+
 /// A job hub for parallel running of multiple jobs over remote
 /// computational nodes
 #[pyclass(name = "JobHub", subclass)]
@@ -156,6 +159,18 @@ impl PyJobHub {
     pub fn new(scheduler_address: String) -> Self {
         let inner = JobHub::new(&scheduler_address);
         Self { inner }
+    }
+
+    #[pyo3(signature = (lock_file = "gosh-remote-scheduler.lock"))]
+    #[pyo3(text_signature = "(lock_file = 'gosh-remote-scheduler.lock')")]
+    #[staticmethod]
+    /// Create `JobHub` with scheduler address reading from
+    /// `lock_file`. The default lock file is
+    /// "gosh-remote-scheduler.lock", which will be crated when
+    /// gosh-remote starts as a scheduler.
+    pub fn from_lock_file(lock_file: &str) -> Result<Self> {
+        let s = gut::fs::read_file(lock_file)?;
+        Ok(Self::new(s))
     }
 
     /// Run all scheduled jobs with nodes in parallel. Call this method
