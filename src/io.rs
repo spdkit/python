@@ -28,6 +28,18 @@ pub fn guess_format_from_path(path: &str) -> Option<String> {
     let fmt = gchemol::io::guess_format_from_path(path.as_ref())?;
     Some(fmt)
 }
+
+#[pyfunction]
+#[pyo3(signature = (pattern, /, root=".", recursive=true))]
+#[pyo3(text_signature = "(pattern, root='.', recursive=True)")]
+/// Recursively find all files in `root` dir with given file name
+/// matching regex `pattern`
+pub fn find_files(pattern: &str, root: &str, recursive: bool) -> Vec<String> {
+    let root = root.as_ref();
+    gchemol::io::find_files(pattern, root, recursive)
+        .map(|p| p.to_string_lossy().to_string())
+        .collect()
+}
 // 4cfd5c0b ends here
 
 // [[file:../spdkit-python.note::377732f7][377732f7]]
@@ -357,6 +369,7 @@ pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     m.add_class::<OptimizationTrajactory>()?;
     m.add_function(wrap_pyfunction!(read, m)?)?;
     m.add_function(wrap_pyfunction!(write, m)?)?;
+    m.add_function(wrap_pyfunction!(find_files, m)?)?;
     m.add_function(wrap_pyfunction!(guess_format_from_path, m)?)?;
 
     Ok(m)
