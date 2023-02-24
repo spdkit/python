@@ -197,41 +197,6 @@ impl PyJobHub {
 }
 // 59752afa ends here
 
-// [[file:../spdkit-python.note::464aa131][464aa131]]
-use qsubmit::JobFileQueue;
-use std::path::Path;
-
-#[pyclass(name = "JobFileQueue")]
-/// A simple job queue system for submission of files in a directory.
-pub struct PyJobFileQueue {
-    inner: JobFileQueue,
-}
-
-#[pymethods]
-impl PyJobFileQueue {
-    /// Construct `JobFileQueue` from queue directory in `qdir`.
-    #[staticmethod]
-    fn from_path(path: &str) -> Self {
-        Self {
-            inner: JobFileQueue::from_path(path.as_ref()),
-        }
-    }
-
-    /// Return full path to an executable symlink from queue
-    /// directory, ordered by names
-    fn get_next_job(&self) -> Result<String> {
-        let path = self.inner.get_next_job()?;
-        Ok(path.to_str().unwrap().to_owned())
-    }
-
-    /// Enqueue executable script `path` as a symlink in `name`.
-    fn enqueue(&self, path: &str, name: Option<&str>) -> Result<()> {
-        self.inner.enqueue(path.as_ref(), name.map(|x| x.as_ref()))?;
-        Ok(())
-    }
-}
-// 464aa131 ends here
-
 // [[file:../spdkit-python.note::25f43dc1][25f43dc1]]
 use gosh::optim::optimize_geometry_iter;
 use gosh::optim::OptimizedIter;
@@ -257,7 +222,7 @@ pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     m.add_class::<PyComputed>()?;
     m.add_class::<PyDbConnection>()?;
     m.add_class::<PyJobHub>()?;
-    m.add_class::<PyJobFileQueue>()?;
+    // m.add_class::<PyJobFileQueue>()?;
     m.add_function(wrap_pyfunction!(optimize, m)?)?;
     Ok(m)
 }

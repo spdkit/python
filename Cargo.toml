@@ -25,7 +25,7 @@ rxview = { version = "0.1", features = ["adhoc"] }
 minima-hopping = { version = "0.0.35", features = ["adhoc"] }
 pythonize = "0.18.0"
 surface = { version = "0.0.35", features = ["adhoc"] }
-qsubmit = { version = "0.1" }
+# qsubmit = { version = "0.1" }
 
 [dev-dependencies]
 criterion = "0.4"
