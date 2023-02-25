@@ -58,6 +58,8 @@ Read/write
 
 .. autofunction:: spdkit.io.write
 
+.. autofunction:: spdkit.io.find_files
+
 .. autofunction:: spdkit.io.guess_format_from_path
 
 Utils
