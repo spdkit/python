@@ -365,6 +365,12 @@ impl PyMolecule {
         self.inner.set_positions(positions);
     }
 
+    /// Set fractional coordinates of atoms in sequence order.
+    /// Panics if Molecule is aperiodic.
+    pub fn set_scaled_positions(&mut self, frac_coords: Vec<[f64; 3]>) {
+        self.inner.set_scaled_positions(frac_coords);
+    }
+
     /// Return atom positions ordered by serial numbers.
     pub fn positions(&self) -> Vec<[f64; 3]> {
         self.inner.positions().collect()
