@@ -710,6 +710,12 @@ impl PyMolecule {
         self.inner.fragmented().map(|inner| Self { inner }).collect()
     }
     
+    /// Return all atoms that connected in the same fragment as atom
+    /// `i`.
+    pub fn connected_fragment_atoms(&self, i: usize) -> Vec<usize> {
+        self.inner.connected_fragment_atoms(i).collect()
+    }
+    
     /// Reorder the atoms according to the ordering of keys. Keys define
     /// 1-to-1 mapping of atoms.
     ///
