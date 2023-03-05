@@ -1,0 +1,30 @@
+#http://cms.mpi.univie.ac.at/wiki/index.php/The_VASP_Manual
+
+#Startparameter for this run
+ SYSTEM   = IMAGE
+ PREC     = NORMAL # PREC specifies the "precision"-mode
+ IBRION   = 2        # -1(SP), 0(MD), 1(relax/RMM-DIIS), 2(relax/CG), 3(relax/Damped MD), 5/6(Hessian), 7/8(Hessian), 44(Dimer)
+ ISPIN    = 2        # ISPIN specifies spin polarization
+ MAGMOM   = 7*0.6  32*5.0 # MAGMOM Specifies the initial magnetic moment for each atom
+ ENCUT    = 420      # ENCUT specifies the cutoff energy for the planewave basis set in eV. (default: largest ENMAX on the POTCAR)
+ #KSPACING = 0.5      # KSPACING determines the number of k-points if the KPOINTS file is not present (default: 0.5)
+ LWAVE    = .F.
+ LCHARG   = .F.
+
+#Electronic relaxation
+ NELM     = 10       # NELM sets the maximum number of electronic SC (selfconsistency) steps
+ EDIFF    = 1E-03    # EDIFF specifies the global break condition for the electronic SC-loop
+ IALGO    = 48       # IALGO selects the algorithm used to optimize the orbitals
+ ALGO     = Fast     # selects a faily robust mixture of the Davidson(IALGO=38) and RMM-DIIS(IALGO=48) algorithms
+ LREAL    = Auto     # LREAL determines whether the projection operators are evaluated in real-space or in reciprocal space
+ ISTART   = 0        # ISTART determines whether or not to read the WAVECAR file
+ ICHARG   = 1        # Take superposition of atomic charge densities (default: 2 / Read the charge density from file CHGCAR: 1)
+ NELMIN   = 3       # NELMIN specifies the minimum number of electronic SCF steps; (Default: 2; MD/Ionic relax: 4~8)
+ ISMEAR   = 1        # ISMEAR determines how the partial occupancies fnk are set for each orbital (-4,-5/tetrahedron; -2/Read; -1/Fermi; 0/Gaussian; N/Methfessel-Paxton)
+ SIGMA    = 0.2      # SIGMA specifies the width of the smearing in eV (default: 0.2)
+
+#Ionic relaxation
+ ISIF     = 3        # stress and relaxation: 2=const.Cell;3=Vol&Cell-relax;4=const.Vol&Cell.adjust
+EDIFFG   = 1e-04    # 
+ NSW      = 5        # NSW sets the maximum number of ionic steps
+ POTIM    = 0.3      # POTIM sets the time step (MD) or step width scaling (ionic relaxations) (default: 0.5)

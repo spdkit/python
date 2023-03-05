@@ -1,0 +1,14 @@
+tera template # syntax ref: https://tera.netlify.app/docs                                                                                                                                                                                     
+1.0
+{% for v in molecule.unit_cell.va %} {{ v | format}} {% endfor %}
+{% for v in molecule.unit_cell.vb %} {{ v | format}} {% endfor %}
+{% for v in molecule.unit_cell.vc %} {{ v | format}} {% endfor %}
+{% for e in molecule.element_types %} {{ e.0 }} {% endfor %}
+{% for e in molecule.element_types %} {{ e.1 }} {% endfor %}
+Selective dynamics
+Direct
+{% for a in molecule.atoms -%}
+{{ a.fx | format}} {{ a.fy | format}} {{ a.fz | format}}
+{%- for tf in a.freezing %} {{ tf | format | replace(from="true", to="F") | replace(from="false", to="T") -}}
+{%- endfor %} # {{a.symbol}} {{a.index}}
+{% endfor %}

@@ -1,0 +1,21 @@
+A workflow to submit cif files (jobs) in parallel using a single VASP
+BBM template (vasp-opt-bbm)
+
+# step 1: prepare inputs
+- put cif files into jobs directory
+- change VASP parameters in vasp-opt-bbm by replacing INCAR, KPOINTS, POTCAR files
+- POTCAR can also be created automatically from POSCAR (see vasp-opt-bbm/submit.sh). Required steps:
+  - make a symbol link to target potential for each element in vasp-opt-bbm/pot directory
+  - generate POTCAR by call generate-potcar-from-poscar.py script
+
+# step 2: submit main job to queue:
+bsub < ./run.chess
+
+# step 3: add a new worker for main job using bsub
+bsub < ./add-new-worker.chess
+
+# step 4: check outputs in jobs directory
+- for example: 201.cif => 201/{vasp.log, CONTCAR, OUTCAR, OSZICAR}
+
+# step 5: when main job (scheduler) done, do not forget to kill worker job
+bkill the-jobid-for-worker
