@@ -214,6 +214,26 @@ impl PyLattice {
     pub fn volume(&self) -> f64 {
         self.inner.volume()
     }
+
+    /// Scale Lattice by a positive constant `v`
+    pub fn scale_by(&mut self, v: f64) {
+        self.inner.scale_by(v)
+    }
+
+    /// Scale Lattice in `a` direction by a positive constant `v`
+    pub fn scale_by_a(&mut self, v: f64) {
+        self.inner.scale_by_a(v)
+    }
+
+    /// Scale Lattice in `b` direction by a positive constant `v`
+    pub fn scale_by_b(&mut self, v: f64) {
+        self.inner.scale_by_b(v)
+    }
+
+    /// Scale Lattice in `c` direction by a positive constant `v`
+    pub fn scale_by_c(&mut self, v: f64) {
+        self.inner.scale_by_c(v)
+    }
 }
 // c8807c91 ends here
 
