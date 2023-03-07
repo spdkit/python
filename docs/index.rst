@@ -76,6 +76,7 @@ Surface
 ==================
 .. autofunction:: spdkit.surface.probe_surface_atoms
 .. autofunction:: spdkit.surface.probe_adsorption_sites
+.. autofunction:: spdkit.surface.fragment_atoms_by_layer
 
 
 Reaction Path

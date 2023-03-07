@@ -34,12 +34,24 @@ pub fn probe_adsorption_sites(mol: &PyMolecule, probe_element: &str, maxcycle: u
 }
 // 3b89501f ends here
 
+// [[file:../spdkit-python.note::09bb2ce3][09bb2ce3]]
+#[pyfunction]
+/// Fragment molecule into connected parts by layer for periodic slab model.
+pub fn fragment_atoms_by_layer(mol: &PyMolecule) -> Result<Vec<Vec<usize>>> {
+    use spdkit_surface::fragment_atoms_by_layer;
+
+    let probed = fragment_atoms_by_layer(&mol.inner)?.collect();
+    Ok(probed)
+}
+// 09bb2ce3 ends here
+
 // [[file:../spdkit-python.note::4b881b59][4b881b59]]
 pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     let m = PyModule::new(py, name)?;
     // m.add_class::<PyTemplate>()?;
     m.add_function(wrap_pyfunction!(probe_surface_atoms, m)?)?;
     m.add_function(wrap_pyfunction!(probe_adsorption_sites, m)?)?;
+    m.add_function(wrap_pyfunction!(fragment_atoms_by_layer, m)?)?;
 
     Ok(m)
 }
