@@ -1,0 +1,35 @@
+Global Parameters
+ ISTART =  1                     (Read existing wavefunction, if there)
+ ISPIN  =  {{ISPIN or 1}}        (Non-Spin polarised DFT)
+ # ICHARG =  11                  (Non-self-consistent: GGA/LDA band structures)
+ LREAL  = .FALSE.                (Projection operators: automatic)
+ ENCUT = {{ENCUT or 400}}        (Cut-off energy for plane wave basis set, in eV)
+ # PREC   =  Accurate            (Precision level: Normal or Accurate, set Accurate when perform structure lattice relaxation calculation)
+ LWAVE  = {{LWAVE or .F.}}       (Write WAVECAR or not)
+ LCHARG = {{LCHARG or .F.}}      (Write CHGCAR or not)
+ ADDGRID= .TRUE.                 (Increase grid, helps GGA convergence)
+ #LVTOT  = .TRUE.                (Write total electrostatic potential into LOCPOT or not)
+ #LVHAR  = .TRUE.                (Write ionic + Hartree electrostatic potential into LOCPOT or not)
+ #NELECT =                       (No. of electrons: charged cells, be careful)
+ #LPLANE = .TRUE.                (Real space distribution, supercells)
+ #KPAR   = 2                     (Divides k-grid into separate groups)
+ #NGXF    = 300                  (FFT grid mesh density for nice charge/potential plots)
+ #NGYF    = 300                  (FFT grid mesh density for nice charge/potential plots)
+ #NGZF    = 300                  (FFT grid mesh density for nice charge/potential plots)
+
+Electronic Relaxation
+ ISMEAR =  {{ISMEAR or 0}}
+ SIGMA  =  {{SIGMA or 0.05}}
+ EDIFF  =  {{EDIFF or '1E-08'}}
+
+Molecular Dynamics
+ IBRION = 0                      (Activate MD)
+ NSW    = {{NSW or 100}}         (Max ionic steps)
+ EDIFFG = {{EDIFFG or '-1E-02'}} (Ionic convergence; eV/AA)
+ POTIM  = 1                      (Timestep in fs)
+ SMASS  = 0                      (MD Algorithm: -3-microcanonical ensemble; 0-canonical ensemble)
+ NWRITE = {{NWRITE or 0}}        (For long MD-runs use NWRITE=0 or NWRITE=1)
+ #TEBEG  =     100               (Start temperature K)
+ #TEEND  =     100               (Start temperature K)
+ #MDALGO =  1                    (Andersen Thermostat)
+ #ISYM   =  0                    (Symmetry: 0=none; 2=GGA; 3=hybrids)

@@ -1,0 +1,27 @@
+Global Parameters
+ ISTART   =  1                  !Read existing wavefunction, if there
+ ISPIN    =  {{ISPIN or 1}}     !Non-Spin polarised DFT
+ #ICHARG  =  11                 !Non-self-consistent: GGA/LDA band structures
+ LREAL    = .FALSE.             !Projection operators: automatic
+ ENCUT    =  {{ENCUT or 400}}   !Cut-off energy for plane wave basis set, in eV
+ #PREC    =  Accurate           !Precision level: Normal or Accurate, set Accurate when perform structure lattice relaxation calculation
+ LWAVE    = {{LWAVE or .F.}}    !Write WAVECAR or not
+ LCHARG   = {{LCHARG or .F.}}   !Write CHGCAR or not
+ ADDGRID  = .TRUE.              !Increase grid, helps GGA convergence
+ #NELECT  =                     !Need set it manually for charged system
+ #LVTOT   = .TRUE.              !Write total electrostatic potential into LOCPOT or not
+ #LVHAR   = .TRUE.              !Write ionic + Hartree electrostatic potential into LOCPOT or not
+ #LPLANE  = .TRUE.              !Real space distribution, supercells
+ #NWRITE  = 2                   !Medium-level output
+ #KPAR    = 2                   !Divides k-grid into separate groups
+ #NGXF    = 300                 !FFT grid mesh density for nice charge/potential plots
+ #NGYF    = 300                 !FFT grid mesh density for nice charge/potential plots
+ #NGZF    = 300                 !FFT grid mesh density for nice charge/potential plots
+
+Static Calculation
+ ISMEAR   =  {{ISMEAR or 0}}    !gaussian smearing method
+ SIGMA    =  {{SIGMA or 0.05}}  !please check the width of the smearing
+ NELM     =  {{NELM or 60}}     !Max electronic SCF steps
+ EDIFF    =  {{EDIFF or 1E-08}} !SCF energy convergence, in eV
+ LORBIT   =  11                 !magnetization output
+ NEDOS    =  2001               !DOSCAR points
