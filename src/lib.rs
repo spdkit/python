@@ -865,6 +865,14 @@ impl PyMolecule {
         let inner = self.inner.create_neighbor_probe();
         PyNeighborProbe { inner }
     }
+    
+    /// Return atoms with xyz coordinates freezed
+    fn selection_freezed_atoms(&self) -> Vec<usize> {
+        self.inner
+            .atoms()
+            .filter_map(|(i, a)| if a.is_fixed() { Some(i) } else { None })
+            .collect()
+    }
 }
 // 969a9313 ends here
 
