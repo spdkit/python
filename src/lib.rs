@@ -1075,7 +1075,13 @@ impl PyChemicalEnvironment {
         PyMolecule { inner }.into()
     }
 
-    /// Update immediate constraints of atom `i` from `mol`.
+    /// Update immediate constraints of atom `i` using distances
+    /// obtained from `mol_a`.
+    ///
+    /// # NOTE
+    /// - `mol_b` must be a sub molecule of its parent, and has the same numbering system.
+    /// - `mol_a` assumed in the same topology as `mol_b`
+    /// - `mol_a  may have a different numbering system.
     pub fn update_constraints_for_center_from(&mut self, mol_a: PyMolecule, mol_b: PyMolecule, i: usize) -> Result<()> {
         self.inner.update_constraints_for_center_from(&mol_a.inner, &mol_b.inner, i)?;
         Ok(())
