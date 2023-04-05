@@ -407,6 +407,13 @@ impl PyMolecule {
         self.inner.renumber();
     }
 
+    /// Format molecule as string in specific molecular file format. Return
+    /// error if cannot format molecule in `fmt`.
+    pub fn format_as(&self, format: String) -> PyResult<String> {
+        let s = self.inner.format_as(&format)?;
+        Ok(s)
+    }
+
     /// Write molecule to file with `path`. The molecule format will
     /// be determined based on file name extension.
     pub fn to_file(&self, path: String) -> PyResult<()> {
