@@ -65,7 +65,12 @@ def view_in_pymol(mol: Molecule, rebond=False, format="pdb"):
         molfile = f.name
         title = mol.title
         lat = mol.get_lattice()
-        mol.to_file(molfile)
+        # for work with rpyc remote Molecule object, we do not call
+        # to_file directly
+        fmt = io.guess_format_from_path(molfile)
+        s = mol.format_as(fmt)
+        open(molfile, "w").write(s)
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py") as f:
             print(f"pymol.cmd.load('{molfile}', '{title}')\n", file=f)
             # pymol doesnot recognize lattice data in mol2 format
@@ -107,7 +112,11 @@ def view_traj_in_pymol(mols: list[Molecule], animated=True, format="mol2", sleep
             i += 1
             molfile = os.path.join(td, f"{i}.{format}")
             title = m.title
-            m.to_file(molfile)
+            # for work with rpyc remote Molecule object, we do not call to_file directly
+            fmt = io.guess_format_from_path(molfile)
+            s = m.format_as(fmt)
+            open(molfile, "w").write(s)
+
             if animated:
                 print(
                     f"pymol.cmd.load('{molfile}', object='traj', state=0)\n", file=fpy
