@@ -1,5 +1,5 @@
 # [[file:../spdkit-python.note::fbe586a0][fbe586a0]]
-from spdkit import *
+from .spdkit import *
 
 
 def from_ase_atoms(ase_atoms):
@@ -241,3 +241,77 @@ def view_traj_in_pymol(mols: list[Molecule], animated=True, format="mol2", sleep
         time.sleep(sleep)
         return p
 # ec59e65f ends here
+
+# [[file:../spdkit-python.note::5ef20e19][5ef20e19]]
+def view_traj_in_jmol(mols: list[Molecule], format="xyz", sleep=5):
+    """View a list of molecule objects as trajectory using Jmol."""
+    import subprocess, tempfile, os
+    import time
+
+    jmol_template = """
+{% if a %}
+load {{molfile}} unitcell "a={{a}},b={{b}},c={{c}},alpha={{alpha}},beta={{beta}},gamma={{gamma}}";
+# show unit cell axes
+unitcell 0.02; set axesUnitCell; set axes 0.05
+{% else %}
+load {{molfile}}
+{% endif %}
+
+# better default for atom selection
+# set showSelections TRUE;
+# set picking SELECT ATOM;
+# select none;
+# selectionhalos;
+
+# better default display settings
+set zshade on;
+set zslab 40;
+set zshadepower 2;
+set PerspectiveDepth off;
+
+# better default atom labels
+color labels yellow;
+font label 20;
+
+# better default for measurement
+set measurements angstroms;
+set defaultDistanceLabel "%2.4VALUE %UNITS";
+
+# animation settings
+anim mode palindrome;
+anim on;
+vibration on;
+# show javascript console window
+console;
+"""
+    assert len(mols) >= 1
+
+    template = io.Template.from_string(jmol_template)
+
+    with tempfile.TemporaryDirectory() as td:
+        # the molecule file for visualization in jmol
+        molfile = os.path.join(td, f"jmol.{format}")
+        io.write(molfile, mols)
+        # create jmol spt script from template
+        lattice = mols[0].get_lattice()
+        if lattice:
+            a, b, c = lattice.lengths()
+            alpha, beta, gamma = lattice.angles()
+            spt = template.render(
+                molfile=molfile, a=a, b=b, c=c, alpha=alpha, beta=beta, gamma=gamma
+            )
+        else:
+            spt = template.render(molfile=molfile)
+
+        # write jmol script file
+        pspt = os.path.join(td, "script.spt")
+        open(pspt, "w").write(spt)
+
+        # open jmol script
+        p = subprocess.Popen(
+            ["jmol", pspt], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        # wait a few seconds for pymol reading temp files
+        time.sleep(sleep)
+        return p
+# 5ef20e19 ends here

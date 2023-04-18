@@ -1,7 +1,7 @@
 # [[file:spdkit-python.note::e345323a][e345323a]]
 [package]
 name = "spdkit-python"
-version = "0.1.9"
+version = "0.1.10"
 edition = "2021"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 description = "structure prediction kit for python"
@@ -42,8 +42,7 @@ adhoc = []
 version = "0.18.1"
 # multiple-pymethods requires Rust 1.62 or above
 # features = ["extension-module", "anyhow", "abi3-py39", "multiple-pymethods"]
-features = ["extension-module", "anyhow", "abi3-py39", "generate-import-lib"]
-
+features = ["extension-module", "anyhow", "abi3-py39"]
 
 [lib]
 name = "spdkit"
