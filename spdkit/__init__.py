@@ -1,5 +1,6 @@
 # [[file:../spdkit-python.note::fbe586a0][fbe586a0]]
 from .spdkit import *
+from typing import Dict, List, Sequence, Tuple, Union
 
 
 def from_ase_atoms(ase_atoms):
@@ -243,8 +244,8 @@ def view_traj_in_pymol(mols: list[Molecule], animated=True, format="mol2", sleep
 # ec59e65f ends here
 
 # [[file:../spdkit-python.note::5ef20e19][5ef20e19]]
-def view_traj_in_jmol(mols: list[Molecule], format="xyz", sleep=5):
-    """View a list of molecule objects as trajectory using Jmol."""
+def view_in_jmol(mols: Union[Molecule, List[Molecule]], format="xyz", sleep=5):
+    """View molecule/molecules using Jmol."""
     import subprocess, tempfile, os
     import time
 
@@ -284,7 +285,13 @@ vibration on;
 # show javascript console window
 console;
 """
-    assert len(mols) >= 1
+
+    if isinstance(mols, Molecule):
+        mols = [mols]
+    elif isinstance(mols, list):
+        pass
+    else:
+        mols = list(mols)
 
     template = io.Template.from_string(jmol_template)
 
