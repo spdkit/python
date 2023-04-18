@@ -176,7 +176,7 @@ def view_in_pymol(mol: Molecule, rebond=False, format="pdb"):
             print("pymol.cmd.show('sphere')", file=f)
             print("pymol.cmd.show('stick')", file=f)
             print("pymol.cmd.show('cell')", file=f)
-            print("pymol.cmd.label('all', 'ID')", file=f)
+            # print("pymol.cmd.label('all', 'ID')", file=f)
             # print("pymol.cmd.orient()", file=f)
             f.flush()
             # return subprocess.run(["pymol", "-J", f.name])
@@ -228,7 +228,7 @@ def view_traj_in_pymol(mols: list[Molecule], animated=True, format="mol2", sleep
         print("pymol.cmd.show('sphere')", file=fpy)
         print("pymol.cmd.show('stick')", file=fpy)
         print("pymol.cmd.show('cell')", file=fpy)
-        print("pymol.cmd.label('all', 'ID')", file=fpy)
+        # print("pymol.cmd.label('all', 'ID')", file=fpy)
         print("pymol.cmd.orient()", file=fpy)
 
         fpy.flush()
