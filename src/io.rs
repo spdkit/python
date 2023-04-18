@@ -77,6 +77,13 @@ impl PyTemplate {
         let inner = Template::try_from_path(path.as_ref())?;
         Ok(Self { inner })
     }
+
+    /// Load template from string.
+    #[staticmethod]
+    fn from_string(s: &str) -> Self {
+        let inner = Template::from_str(s);
+        Self { inner }
+    }
 }
 // 377732f7 ends here
 
