@@ -322,3 +322,31 @@ console;
         time.sleep(sleep)
         return p
 # 5ef20e19 ends here
+
+# [[file:../spdkit-python.note::4872ebff][4872ebff]]
+def view_in_agui(mols: Union[Molecule, List[Molecule]], sleep=5):
+    """View molecule/molecules using AGUI."""
+    import subprocess, tempfile, os
+    import time
+
+    if isinstance(mols, Molecule):
+        mols = [mols]
+    elif isinstance(mols, list):
+        pass
+    else:
+        mols = list(mols)
+
+    with tempfile.TemporaryDirectory() as td:
+        # the molecule file for visualization in jmol
+        molfile = os.path.join(td, "spdkit.mol2")
+        for m in mols:
+            m.rebond(ignore_pbc=True)
+        io.write(molfile, mols)
+        # open jmol script
+        p = subprocess.Popen(
+            ["agui", molfile], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        # wait a few seconds for pymol reading temp files
+        time.sleep(sleep)
+        return p
+# 4872ebff ends here
