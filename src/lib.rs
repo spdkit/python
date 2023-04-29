@@ -792,7 +792,12 @@ impl PyMolecule {
         Ok(())
     }
     
-    /// Return unique fingerprint of current molecule
+    /// Return a unique fingerprint of current molecule based on its bond
+    /// graph. This fingerprint is independent of its 3d geometry or atom
+    /// numbering.
+    ///
+    /// # NOTE
+    ///   * This operation internally call `reorder_cannonically` method.
     pub fn fingerprint(&self) -> String {
         use spdkit::prelude::FingerPrintExt;
         self.inner.fingerprint()
