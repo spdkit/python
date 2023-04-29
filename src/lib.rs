@@ -576,6 +576,16 @@ impl PyMolecule {
         self.inner.numbers().collect()
     }
 
+    /// Return atom symbols
+    pub fn symbols(&self) -> Vec<String> {
+        self.inner.symbols().map(|x| x.to_owned()).collect()
+    }
+
+    /// Return atomic numbers
+    pub fn atomic_numbers(&self) -> Vec<usize> {
+        self.inner.atomic_numbers().collect()
+    }
+
     /// Return an iterator over a tuple of atom serial number `n` and
     /// its associated `Atom` (n, Atom)
     pub fn atoms(&self) -> PyAtomsIter {
