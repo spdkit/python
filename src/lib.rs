@@ -709,12 +709,28 @@ impl PyMolecule {
     }
     
     /// Add a single bond between Atom `i` and Atom `j` into molecule.
-    /// Panic if the specified atom a or b does not exist
-    #[pyo3(text_signature = "($self, i, j, /)")]
-    pub fn add_bond(&mut self, i: usize, j: usize) {
+    /// Panic if the specified atom a or b does not exist.
+    ///
+    /// # Parameters
+    /// * kind: set bond kind using a string type. Possible values: dummy,
+    ///   partial, single, aromatic, double, triple, quadruple
+    #[pyo3(text_signature = "($self, i, j, /, kind = None)")]
+    pub fn add_bond(&mut self, i: usize, j: usize, kind: Option<String>) {
         use gchemol::Bond;
     
-        self.inner.add_bond(i, j, Bond::single())
+        let bond = kind
+            .map(|s| match s.as_str() {
+                "dummy" => Bond::dummy(),
+                "partial" => Bond::partial(),
+                "single" => Bond::single(),
+                "aromatic" => Bond::aromatic(),
+                "double" => Bond::double(),
+                "triple" => Bond::triple(),
+                "quadruple" => Bond::quadruple(),
+                _ => panic!("invalid bond kind {s}"),
+            })
+            .unwrap_or(Bond::single());
+        self.inner.add_bond(i, j, bond)
     }
     
     /// Remove the bond between atom `i` and atom `j`.
