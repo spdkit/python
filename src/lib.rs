@@ -6,9 +6,10 @@ use pyo3::types::PyType;
 // [[file:../spdkit-python.note::787fe451][787fe451]]
 mod apps;
 mod gosh;
+mod gui;
 mod io;
-mod utils;
 mod surface;
+mod utils;
 
 // mod htc;
 // 787fe451 ends here

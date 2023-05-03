@@ -1,7 +1,7 @@
 # [[file:spdkit-python.note::e345323a][e345323a]]
 [package]
 name = "spdkit-python"
-version = "0.1.10"
+version = "0.1.11"
 edition = "2021"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 description = "structure prediction kit for python"
@@ -26,6 +26,11 @@ minima-hopping = { version = "0.0.35", features = ["adhoc"] }
 pythonize = "0.18.0"
 surface = { version = "0.0.35", features = ["adhoc"] }
 # qsubmit = { version = "0.1" }
+reqwest = { version = "0.11", default-features = false, features = [
+  "json",
+  "blocking",
+  "rustls-tls",
+] }
 
 [dev-dependencies]
 criterion = "0.4"
