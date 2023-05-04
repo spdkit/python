@@ -1158,6 +1158,10 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     let s = apps::new(py, "apps")?;
     m.add_submodule(s)?;
 
+    // gui: visualization
+    let s = gui::new(py, "gui")?;
+    m.add_submodule(s)?;
+
     // for ad-hoc experiments
     let dwim = PyModule::new(py, "dwim")?;
     dwim.add_class::<PyChemicalEnvironment>()?;

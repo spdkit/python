@@ -350,3 +350,20 @@ def view_in_agui(mols: Union[Molecule, List[Molecule]], sleep=5):
         time.sleep(sleep)
         return p
 # 4872ebff ends here
+
+# [[file:../spdkit-python.note::db2ed389][db2ed389]]
+def view(mols: Union[Molecule, List[Molecule]]):
+    """view molecule/molecules using gchemol-view"""
+    import subprocess, tempfile, os
+    import time
+
+    if isinstance(mols, Molecule):
+        mols = [mols]
+    elif isinstance(mols, list):
+        pass
+    else:
+        mols = list(mols)
+
+    v = gui.GchemolViewClient()
+    v.load(mols)
+# db2ed389 ends here
