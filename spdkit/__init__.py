@@ -352,10 +352,9 @@ def view_in_agui(mols: Union[Molecule, List[Molecule]], sleep=5):
 # 4872ebff ends here
 
 # [[file:../spdkit-python.note::db2ed389][db2ed389]]
-def view(mols: Union[Molecule, List[Molecule]]):
+def view(mols: Union[Molecule, List[Molecule]], remote=False):
     """view molecule/molecules using gchemol-view"""
-    import subprocess, tempfile, os
-    import time
+    import os
 
     if isinstance(mols, Molecule):
         mols = [mols]
@@ -364,6 +363,25 @@ def view(mols: Union[Molecule, List[Molecule]]):
     else:
         mols = list(mols)
 
-    v = gui.GchemolViewClient()
-    v.load(mols)
+    # here we determine the port based on user id for avoiding port
+    # conflicts between different users
+    if remote:
+        uid = os.getuid()
+        port = 49152 + (uid % 1000)
+    else:
+        port = 3039
+    viewer = gui.GchemolViewClient(port)
+    try:
+        viewer.load(mols)
+    except:
+        print(
+            f"The gchemol remove view service is not ready on port http://127.0.0.1:{port}."
+        )
+        if remote:
+            print(
+                f"If you are in HPC environment, a safe port is for remote view is {port}"
+            )
+            print(
+                "Follow the link for detailed setup for reverse port forwarding: https://github.com/ybyygu/gchemol-view"
+            )
 # db2ed389 ends here

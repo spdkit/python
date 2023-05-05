@@ -10,6 +10,7 @@ use reqwest::blocking::Client;
 
 /// A client for remote view using gchemol-view
 #[pyclass(name = "GchemolViewClient")]
+#[pyo3(text_signature = "(symbol, position=[0, 0, 0])")]
 pub struct PyGchemolViewClient {
     client: Client,
     server: String,
@@ -18,11 +19,14 @@ pub struct PyGchemolViewClient {
 #[pymethods]
 impl PyGchemolViewClient {
     #[new]
-    fn new() -> Self {
+    #[pyo3(signature = (port = 3039))]
+    fn new(port: usize) -> Self {
+        let server = format!("127.0.0.1:{port}");
+        info!("connecting to {server:?}");
         let client = reqwest::blocking::Client::builder().build().expect("reqwest client");
         Self {
             client: client.into(),
-            server: "127.0.0.1:3039".to_owned(),
+            server,
         }
     }
 
