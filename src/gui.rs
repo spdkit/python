@@ -36,10 +36,10 @@ impl PyGchemolViewClient {
     ///   * currently only the first molecule in the list will be sent
     fn load(&mut self, mols: Vec<PyMolecule>) -> Result<()> {
         let server = &self.server;
-        let uri = format!("http://{server}/view-molecule");
+        let uri = format!("http://{server}/view-molecules");
         if !mols.is_empty() {
-            let mol = &mols[0];
-            let resp = self.client.post(&uri).json(&mol.inner).send()?.text()?;
+            let mols: Vec<_> = mols.into_iter().map(|m| m.inner).collect();
+            let resp = self.client.post(&uri).json(&mols).send()?.text()?;
             println!("{resp:?}");
         } else {
             eprintln!("molecule list is empty.");
