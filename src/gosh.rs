@@ -202,23 +202,61 @@ use gosh::optim::optimize_geometry_iter;
 use gosh::optim::OptimizedIter;
 // 25f43dc1 ends here
 
-// [[file:../spdkit-python.note::d6a9828e][d6a9828e]]
-#[pyfunction]
-#[pyo3(signature = (mol, bbm, /, fmax=0.1, nmax=100))]
-#[pyo3(text_signature = "(mol, bbm, fmax=0.1, nmax=100)")]
+// [[file:../spdkit-python.note::a3472bf1][a3472bf1]]
+use std::sync::Arc;
+
+// #[pyclass(name = "BlackBoxModel", subclass)]
+#[pyclass(name = "ChemicalModel")]
+#[derive(Clone)]
+pub struct PyChemicalModel {
+    inner: Arc<PyObject>,
+}
+
+#[pymethods]
+impl PyChemicalModel {
+    #[new]
+    fn new(obj: PyObject) -> Self {
+        Self { inner: Arc::new(obj) }
+    }
+}
+
+impl ChemicalModel for PyChemicalModel {
+    fn compute(&mut self, mol: &Molecule) -> Result<Computed> {
+        use pyo3::types::PyDict;
+
+        let (energy, forces) = Python::with_gil(|py| -> PyResult<(f64, Vec<[f64; 3]>)> {
+            let mol = PyMolecule { inner: mol.clone() };
+            let s = self.inner.call_method1(py, "compute", (mol,))?;
+            let d = s.downcast::<PyDict>(py)?;
+            let e = d.get_item("energy").unwrap().extract()?;
+            let f = d.get_item("forces").unwrap().extract()?;
+            Ok((e, f))
+        })?;
+
+        let mut computed = Computed::default();
+        computed.set_energy(energy);
+        computed.set_forces(forces);
+        Ok(computed)
+    }
+}
+
 /// Optimize geometry of `mol` using potential provided by `bbm`.
-fn optimize(mol: &mut PyMolecule, bbm: &mut PyBlackBoxModel, fmax: f64, nmax: usize) -> Result<PyComputed> {
-    let optimized = gosh::optim::Optimizer::new(fmax, nmax).optimize_geometry(&mut mol.inner, &mut bbm.inner)?;
+#[pyfunction]
+#[pyo3(signature = (mol, model, /, fmax=0.1, nmax=100))]
+#[pyo3(text_signature = "(mol, model, fmax=0.1, nmax=100)")]
+fn optimize(mol: &mut PyMolecule, model: &mut PyChemicalModel, fmax: f64, nmax: usize) -> Result<PyComputed> {
+    let optimized = gosh::optim::Optimizer::new(fmax, nmax).optimize_geometry(&mut mol.inner, model)?;
     Ok(PyComputed {
         inner: optimized.computed,
     })
 }
-// d6a9828e ends here
+// a3472bf1 ends here
 
 // [[file:../spdkit-python.note::83f2f6c1][83f2f6c1]]
 pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     let m = PyModule::new(py, name)?;
     m.add_class::<PyBlackBoxModel>()?;
+    m.add_class::<PyChemicalModel>()?;
     m.add_class::<PyComputed>()?;
     m.add_class::<PyDbConnection>()?;
     m.add_class::<PyJobHub>()?;
