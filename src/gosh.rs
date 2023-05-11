@@ -239,18 +239,32 @@ impl ChemicalModel for PyChemicalModel {
         Ok(computed)
     }
 }
+// a3472bf1 ends here
 
-/// Optimize geometry of `mol` using potential provided by `bbm`.
+// [[file:../spdkit-python.note::d6a9828e][d6a9828e]]
 #[pyfunction]
 #[pyo3(signature = (mol, model, /, fmax=0.1, nmax=100))]
 #[pyo3(text_signature = "(mol, model, fmax=0.1, nmax=100)")]
-fn optimize(mol: &mut PyMolecule, model: &mut PyChemicalModel, fmax: f64, nmax: usize) -> Result<PyComputed> {
-    let optimized = gosh::optim::Optimizer::new(fmax, nmax).optimize_geometry(&mut mol.inner, model)?;
+/// Optimize geometry of `mol` using potential provided by a custom calculator `model`.
+fn optimize(mol: &mut PyMolecule, model: PyObject, fmax: f64, nmax: usize) -> Result<PyComputed> {
+    let mut model = PyChemicalModel { inner: Arc::new(model) };
+    let optimized = gosh::optim::Optimizer::new(fmax, nmax).optimize_geometry(&mut mol.inner, &mut model)?;
     Ok(PyComputed {
         inner: optimized.computed,
     })
 }
-// a3472bf1 ends here
+
+#[pyfunction]
+#[pyo3(signature = (mol, bbm, /, fmax=0.1, nmax=100))]
+#[pyo3(text_signature = "(mol, bbm, fmax=0.1, nmax=100)")]
+/// Optimize geometry of `mol` using potential provided by BlackBoxModel `bbm`.
+fn optimize_bbm(mol: &mut PyMolecule, bbm: &mut PyBlackBoxModel, fmax: f64, nmax: usize) -> Result<PyComputed> {
+    let optimized = gosh::optim::Optimizer::new(fmax, nmax).optimize_geometry(&mut mol.inner, &mut bbm.inner)?;
+    Ok(PyComputed {
+        inner: optimized.computed,
+    })
+}
+// d6a9828e ends here
 
 // [[file:../spdkit-python.note::83f2f6c1][83f2f6c1]]
 pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
@@ -260,8 +274,8 @@ pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     m.add_class::<PyComputed>()?;
     m.add_class::<PyDbConnection>()?;
     m.add_class::<PyJobHub>()?;
-    // m.add_class::<PyJobFileQueue>()?;
     m.add_function(wrap_pyfunction!(optimize, m)?)?;
+    m.add_function(wrap_pyfunction!(optimize_bbm, m)?)?;
     Ok(m)
 }
 // 83f2f6c1 ends here
