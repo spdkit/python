@@ -6,6 +6,7 @@ use pyo3::prelude::*;
 // [[file:../spdkit-python.note::4c0ea8d1][4c0ea8d1]]
 #[pyfunction]
 /// Enable logging by setting verbosity level to `level`.
+/// 0 => warn, 1 => info, 2 => debug, 3 or above => trace
 pub fn set_verbosity(level: u8) {
     let mut log = gut::cli::Verbosity::default();
     log.set_verbosity(level);
