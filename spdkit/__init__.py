@@ -1,4 +1,7 @@
 # [[file:../spdkit-python.note::fbe586a0][fbe586a0]]
+# required for python 3.8
+from __future__ import annotations
+
 from .spdkit import *
 from typing import Dict, List, Sequence, Tuple, Union
 

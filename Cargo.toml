@@ -47,7 +47,7 @@ adhoc = []
 version = "0.18.1"
 # multiple-pymethods requires Rust 1.62 or above
 # features = ["extension-module", "anyhow", "abi3-py39", "multiple-pymethods"]
-features = ["extension-module", "anyhow", "abi3-py39"]
+features = ["extension-module", "anyhow", "abi3-py38"]
 
 [lib]
 name = "spdkit"
