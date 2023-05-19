@@ -381,6 +381,20 @@ impl PyMolecule {
         Ok(())
     }
 
+    /// Set label of atom `i`.
+    pub fn set_atom_label(&mut self, i: usize, label: String) -> PyResult<()> {
+        let a = self.inner.get_atom_mut(i).ok_or(format_err!("no atom {i}"))?;
+        a.set_label(label);
+        Ok(())
+    }
+
+    /// Get label of atom `i`.
+    pub fn get_atom_label(&self, i: usize) -> PyResult<String> {
+        let a = self.inner.get_atom(i).ok_or(format_err!("no atom {i}"))?;
+        let s = a.get_label().unwrap_or_default();
+        Ok(s.to_owned())
+    }
+
     /// Set positions of atoms in sequential order.
     pub fn set_positions(&mut self, positions: Vec<[f64; 3]>) {
         self.inner.set_positions(positions);

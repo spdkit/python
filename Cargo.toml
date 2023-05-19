@@ -1,7 +1,7 @@
 # [[file:spdkit-python.note::e345323a][e345323a]]
 [package]
 name = "spdkit-python"
-version = "0.1.12"
+version = "0.1.13"
 edition = "2021"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 description = "structure prediction kit for python"
