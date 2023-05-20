@@ -31,6 +31,7 @@ reqwest = { version = "0.11", default-features = false, features = [
   "blocking",
   "rustls-tls",
 ] }
+bvcalc = { version = "0.1" }
 
 [dev-dependencies]
 criterion = "0.4"

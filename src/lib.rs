@@ -4,6 +4,7 @@ use pyo3::types::PyType;
 // 0cbf1e93 ends here
 
 // [[file:../spdkit-python.note::787fe451][787fe451]]
+mod analysis;
 mod apps;
 mod gosh;
 mod gui;
@@ -1174,6 +1175,10 @@ fn pyspdkit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
 
     // gui: visualization
     let s = gui::new(py, "gui")?;
+    m.add_submodule(s)?;
+
+    // analysis: bond valence, atom valence, general atom valence, ...
+    let s = analysis::new(py, "analysis")?;
     m.add_submodule(s)?;
 
     // for ad-hoc experiments
