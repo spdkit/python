@@ -119,6 +119,43 @@ impl PyAtom {
 }
 // 95be1618 ends here
 
+// [[file:../spdkit-python.note::get-atom-d2a26b5a][get-atom-d2a26b5a]]
+/// Access the atom copy by atom serial number `n`. Return None if
+#[pymethods]
+impl PyMolecule {
+    /// serial number `n` invalid.
+    pub fn get_atom(&self, n: usize) -> Option<PyAtom> {
+        let inner = self.inner.get_atom(n)?.clone();
+        PyAtom { inner }.into()
+    }
+
+    /// Add atom a into molecule. If Atom numbered as a already exists in
+    /// molecule, then the associated Atom will be updated with atom.
+    pub fn add_atom(&mut self, n: usize, atom: PyAtom) {
+        self.inner.add_atom(n, atom.inner)
+    }
+
+    /// Remove Atom a from Molecule. Return the removed Atom on success,
+    /// and return None if Atom a does not exist.
+    pub fn remove_atom(&mut self, n: usize) -> Option<PyAtom> {
+        let inner = self.inner.remove_atom(n)?;
+        PyAtom { inner }.into()
+    }
+
+    /// Remove atoms in `selection` from Molecule. Return the removed
+    /// atoms on success, and return None if any atom does not exist.
+    pub fn remove_atoms(&mut self, selection: Selection) -> Option<Vec<PyAtom>> {
+        let mut removed = vec![];
+        for n in selection.try_into_list().ok()? {
+            let inner = self.inner.remove_atom(n)?;
+            let a = PyAtom { inner };
+            removed.push(a);
+        }
+        Some(removed)
+    }
+}
+// get-atom-d2a26b5a ends here
+
 // [[file:../spdkit-python.note::c8807c91][c8807c91]]
 use gchemol::Lattice;
 
@@ -319,6 +356,38 @@ impl PyNeighborProbe {
 }
 // ef13f019 ends here
 
+// [[file:../spdkit-python.note::selection-934bc1b5][selection-934bc1b5]]
+#[pymethods]
+impl PyMolecule {
+    /// Return selected atoms by expanding `n` chemical bonds away from
+    /// the center atom `m`
+    ///
+    /// Note: the center atom m is put last in returned molecule.
+    fn selection_by_expanding_bond(&self, m: usize, n: usize) -> Vec<usize> {
+        self.inner.selection_by_expanding_bond(m, n)
+    }
+
+    /// Return selected atoms by cutoff distance `r` nearby central atom `n`
+    fn selection_by_distance(&self, n: usize, r: f64) -> Vec<usize> {
+        self.inner.selection_by_distance(n, r)
+    }
+
+    /// Return a `Neighborhood` struct for finding nearest neighbors.
+    fn create_neighbor_probe(&self) -> PyNeighborProbe {
+        let inner = self.inner.create_neighbor_probe();
+        PyNeighborProbe { inner }
+    }
+
+    /// Return atoms with xyz coordinates freezed
+    fn selection_freezed_atoms(&self) -> Vec<usize> {
+        self.inner
+            .atoms()
+            .filter_map(|(i, a)| if a.is_fixed() { Some(i) } else { None })
+            .collect()
+    }
+}
+// selection-934bc1b5 ends here
+
 // [[file:../spdkit-python.note::969a9313][969a9313]]
 use gchemol::prelude::*;
 use gchemol::Molecule;
@@ -345,7 +414,7 @@ impl PyMolecule {
     /// Create a new copy of `Molecule.`
     pub fn clone(&self) -> Self {
         let inner = self.inner.clone();
-        Self {inner}
+        Self { inner }
     }
 
     /// Return the name of the molecule, which is typpically modified
@@ -458,7 +527,7 @@ impl PyMolecule {
     /// structure. Return lattice if periodic, otherwise return None.
     pub fn unbuild_crystal(&mut self) -> Option<PyLattice> {
         let lat = self.inner.unbuild_crystal();
-        lat.map(|inner| PyLattice {inner})
+        lat.map(|inner| PyLattice { inner })
     }
 
     /// Create a Lattice from the minimal bounding box of the Molecule
@@ -614,38 +683,6 @@ impl PyMolecule {
         }
     }
 
-    /// Access the atom copy by atom serial number `n`. Return None if
-    /// serial number `n` invalid.
-    pub fn get_atom(&self, n: usize) -> Option<PyAtom> {
-        let inner = self.inner.get_atom(n)?.clone();
-        PyAtom { inner }.into()
-    }
-    
-    /// Add atom a into molecule. If Atom numbered as a already exists in
-    /// molecule, then the associated Atom will be updated with atom.
-    pub fn add_atom(&mut self, n: usize, atom: PyAtom) {
-        self.inner.add_atom(n, atom.inner)
-    }
-    
-    /// Remove Atom a from Molecule. Return the removed Atom on success,
-    /// and return None if Atom a does not exist.
-    pub fn remove_atom(&mut self, n: usize) -> Option<PyAtom> {
-        let inner = self.inner.remove_atom(n)?;
-        PyAtom { inner }.into()
-    }
-    
-    /// Remove atoms in `selection` from Molecule. Return the removed
-    /// atoms on success, and return None if any atom does not exist.
-    pub fn remove_atoms(&mut self, selection: Selection) -> Option<Vec<PyAtom>> {
-        let mut removed = vec![];
-        for n in selection.try_into_list().ok()? {
-            let inner = self.inner.remove_atom(n)?;
-            let a = PyAtom { inner };
-            removed.push(a);
-        }
-        Some(removed)
-    }
-
     /// Return a sub molecule induced by `atoms` in parent
     /// molecule. Return None if atom serial numbers are
     /// invalid. Return an empty Molecule if `atoms` empty.
@@ -677,12 +714,17 @@ impl PyMolecule {
         let scaled = self.inner.get_scaled_positions()?.collect_vec();
         scaled.into()
     }
+}
+// 969a9313 ends here
 
-    /// Get the number of bonds.
+// [[file:../spdkit-python.note::bond-19703efc][bond-19703efc]]
+/// Get the number of bonds.
+#[pymethods]
+impl PyMolecule {
     pub fn nbonds(&self) -> usize {
         self.inner.nbonds()
     }
-    
+
     /// Return the shortest distance counted in number of chemical
     /// bonds between two atoms. Return None if they are not
     /// connected.
@@ -690,7 +732,7 @@ impl PyMolecule {
         let n = self.inner.nbonds_between(i, j);
         Ok(n)
     }
-    
+
     #[pyo3(signature = (ignore_pbc=false, bond_tolerance=0.45))]
     #[pyo3(text_signature = "(ignore_pbc=False, bond_tolerance=0.45)")]
     /// Recalculates all bonds in molecule based on interatomic
@@ -701,13 +743,13 @@ impl PyMolecule {
         std::env::set_var("GCHEMOL_REBOND_BOND_TOLERANCE", format!("{bond_tolerance}"));
         self.inner.rebond();
     }
-    
+
     /// Removes all existing bonds between atoms.
     pub fn unbound(&mut self) -> PyResult<()> {
         self.inner.unbound();
         Ok(())
     }
-    
+
     /// Return a list of bonds in tuples (u, v, bond_order)
     pub fn bonds(&mut self) -> Vec<(usize, usize, f64)> {
         self.inner
@@ -715,7 +757,7 @@ impl PyMolecule {
             .map(|(u, v, b)| if u > v { (u, v, b.order()) } else { (v, u, b.order()) })
             .collect()
     }
-    
+
     /// Removes all bonds between atoms in `selection1` and `selection2`,
     /// in respect of pymol's `unbond` command.
     ///
@@ -732,7 +774,7 @@ impl PyMolecule {
         self.inner.unbond(&atom_indices1, &atom_indices2);
         Ok(())
     }
-    
+
     /// Add a single bond between Atom `i` and Atom `j` into molecule.
     /// Panic if the specified atom a or b does not exist.
     ///
@@ -742,7 +784,7 @@ impl PyMolecule {
     #[pyo3(text_signature = "($self, i, j, /, kind = None)")]
     pub fn add_bond(&mut self, i: usize, j: usize, kind: Option<String>) {
         use gchemol::Bond;
-    
+
         let bond = kind
             .map(|s| match s.as_str() {
                 "dummy" => Bond::dummy(),
@@ -757,177 +799,22 @@ impl PyMolecule {
             .unwrap_or(Bond::single());
         self.inner.add_bond(i, j, bond)
     }
-    
+
     /// Remove the bond between atom `i` and atom `j`.
     #[pyo3(text_signature = "($self, i, j, /)")]
     pub fn remove_bond(&mut self, i: usize, j: usize) {
         use gchemol::Bond;
-    
+
         self.inner.remove_bond(i, j);
     }
-    
+
     /// Return all directly bonded atoms in serial numbers with atom `n`.
     #[pyo3(text_signature = "($self, n)")]
     pub fn connected(&self, n: usize) -> Vec<usize> {
         self.inner.connected(n).collect()
     }
-
-    /// Break molecule into multiple fragments based on its bonding
-    /// connectivity.
-    pub fn fragmented(&self) -> Vec<Self> {
-        self.inner.fragmented().map(|inner| Self { inner }).collect()
-    }
-    
-    /// Return all atoms that connected in the same fragment as atom
-    /// `i`.
-    pub fn connected_fragment_atoms(&self, i: usize) -> Vec<usize> {
-        self.inner.connected_fragment_atoms(i).collect()
-    }
-    
-    /// Reorder the atoms according to the ordering of keys. Keys define
-    /// 1-to-1 mapping of atoms.
-    ///
-    /// # Parameters
-    /// * keys: a list of numbers for sorting
-    ///
-    /// # NOTE
-    /// * This method will cause serial numbers renumbered from 1.
-    pub fn reorder(&mut self, keys: Vec<usize>) {
-        self.inner.reorder(&keys);
-    }
-    
-    /// Superimpose structure onto `mol_ref` which will be held fixed
-    /// during alignment. Return superposition rmsd on done.
-    ///
-    /// # NOTE
-    /// * The atoms must be in one-to-one mapping with atoms in `mol_ref`
-    /// * The structure could be mirrored for better alignment.
-    /// * Heavy atoms have more weights.
-    #[pyo3(signature = (mol_ref, /, selection = None))]
-    #[pyo3(text_signature = "($self, mol_ref, /, selection = None)")]
-    pub fn superimpose_onto(&mut self, mol_ref: Self, selection: Option<Selection>) -> PyResult<f64> {
-        let rmsd = if let Some(selected) = selection {
-            let s = selected.try_into_list()?;
-            self.inner.superimpose_onto(&mol_ref.inner, Some(&s))
-        } else {
-            self.inner.superimpose_onto(&mol_ref.inner, None)
-        };
-    
-        Ok(rmsd)
-    }
-
-    pub fn educated_rebond(&mut self) {
-        use educate::prelude::*;
-        self.inner.educated_rebond();
-    }
-    
-    pub fn educated_clean(&mut self) {
-        use educate::prelude::*;
-        self.inner.educated_clean();
-    }
-    
-    pub fn educated_clean_selection(&mut self, selection: Selection) -> PyResult<()> {
-        use educate::prelude::*;
-        let selection = selection.try_into_list()?;
-        self.inner.educated_clean_selection(&selection);
-        Ok(())
-    }
-    
-    /// Return a unique fingerprint of current molecule based on its bond
-    /// graph. This fingerprint is independent of its 3d geometry or atom
-    /// numbering.
-    ///
-    /// # NOTE
-    ///   * This operation internally call `reorder_cannonically` method.
-    pub fn fingerprint(&self) -> String {
-        use spdkit::prelude::FingerPrintExt;
-        self.inner.fingerprint()
-    }
-    
-    /// Calculate disparity between `self` and `mol` using algorithm
-    /// proposed by Lazauskas et al (DOI:10.1039/C6NR09072A)
-    pub fn disparity_between(&self, mol: &PyMolecule) -> f64 {
-        use spdkit::prelude::SimilarityExt;
-        self.inner.disparity_between(&mol.inner)
-    }
-    
-    /// This is an operation of reordering the atoms in a way that does not depend
-    /// on where they were before. The bonding graph is important for this
-    /// operation.
-    pub fn reorder_cannonically(&mut self) -> (Vec<usize>, Vec<usize>) {
-        use spdkit::prelude::FingerPrintExt;
-        self.inner.reorder_cannonically()
-    }
-    
-    /// Make `self` resemble `mol_ref` by applying rigid operations in
-    /// permutation, translation or rotation, without changing inner
-    /// 3D geometry. Equivalent atoms are recoginized based on
-    /// connectivity. Return alignment rmsd on success.
-    pub fn resemble_rigidly(&mut self, mol_ref: PyMolecule) -> Result<f64> {
-        use spdkit::prelude::FingerPrintExt;
-        self.inner.resemble_rigidly(&mol_ref.inner)
-    }
-    
-    /// Convert `Molecule` to a graph object for distance geometry
-    /// refinement.
-    pub fn to_distance_geometry_graph(&self) -> DgGraph {
-        let dg = self.inner.distance_geometry_graph();
-        DgGraph { inner: dg }
-    }
-
-    /// Construct `Molecule` object from a file `path`. If the file
-    /// contains multiple molecules, only the last one will be read.
-    #[staticmethod]
-    pub fn from_file(path: String) -> PyResult<Self> {
-        let inner = Molecule::from_file(&path)?;
-        // let instance = cls.call0()?;
-        // let mol: Py<Self> = instance.extract()?;
-        Ok(Self { inner })
-    }
-    
-    /// Construct `Molecule` from string `src` in specific molecular file
-    /// format `fmt`. Possible fmt includes `text/xyz`, `text/pxyz`,
-    /// `vasp/input` etc.
-    #[staticmethod]
-    pub fn from_string(src: String, fmt: String) -> PyResult<Self> {
-        let inner = Molecule::from_str(&src, &fmt)?;
-        Ok(Self { inner })
-    }
-    
-    #[staticmethod]
-    /// Describe available backends for reading/writing molecule
-    pub fn describe_available_backends() {
-        gchemol::io::describe_backends();
-    }
-
-    /// Return selected atoms by expanding `n` chemical bonds away from
-    /// the center atom `m`
-    ///
-    /// Note: the center atom m is put last in returned molecule.
-    fn selection_by_expanding_bond(&self, m: usize, n: usize) -> Vec<usize> {
-        self.inner.selection_by_expanding_bond(m, n)
-    }
-    
-    /// Return selected atoms by cutoff distance `r` nearby central atom `n`
-    fn selection_by_distance(&self, n: usize, r: f64) -> Vec<usize> {
-        self.inner.selection_by_distance(n, r)
-    }
-    
-    /// Return a `Neighborhood` struct for finding nearest neighbors.
-    fn create_neighbor_probe(&self) -> PyNeighborProbe {
-        let inner = self.inner.create_neighbor_probe();
-        PyNeighborProbe { inner }
-    }
-    
-    /// Return atoms with xyz coordinates freezed
-    fn selection_freezed_atoms(&self) -> Vec<usize> {
-        self.inner
-            .atoms()
-            .filter_map(|(i, a)| if a.is_fixed() { Some(i) } else { None })
-            .collect()
-    }
 }
-// 969a9313 ends here
+// bond-19703efc ends here
 
 // [[file:../spdkit-python.note::a31e85a4][a31e85a4]]
 #[pyclass]
@@ -961,6 +848,149 @@ impl PyMoleculeIter {
     }
 }
 // a31e85a4 ends here
+
+// [[file:../spdkit-python.note::superimpose-dd828a64][superimpose-dd828a64]]
+#[pymethods]
+impl PyMolecule {
+    /// Break molecule into multiple fragments based on its bonding
+    /// connectivity.
+    pub fn fragmented(&self) -> Vec<Self> {
+        self.inner.fragmented().map(|inner| Self { inner }).collect()
+    }
+
+    /// Return all atoms that connected in the same fragment as atom
+    /// `i`.
+    pub fn connected_fragment_atoms(&self, i: usize) -> Vec<usize> {
+        self.inner.connected_fragment_atoms(i).collect()
+    }
+
+    /// Reorder the atoms according to the ordering of keys. Keys define
+    /// 1-to-1 mapping of atoms.
+    ///
+    /// # Parameters
+    /// * keys: a list of numbers for sorting
+    ///
+    /// # NOTE
+    /// * This method will cause serial numbers renumbered from 1.
+    pub fn reorder(&mut self, keys: Vec<usize>) {
+        self.inner.reorder(&keys);
+    }
+
+    /// Superimpose structure onto `mol_ref` which will be held fixed
+    /// during alignment. Return superposition rmsd on done.
+    ///
+    /// # NOTE
+    /// * The atoms must be in one-to-one mapping with atoms in `mol_ref`
+    /// * The structure could be mirrored for better alignment.
+    /// * Heavy atoms have more weights.
+    #[pyo3(signature = (mol_ref, /, selection = None))]
+    #[pyo3(text_signature = "($self, mol_ref, /, selection = None)")]
+    pub fn superimpose_onto(&mut self, mol_ref: Self, selection: Option<Selection>) -> PyResult<f64> {
+        let rmsd = if let Some(selected) = selection {
+            let s = selected.try_into_list()?;
+            self.inner.superimpose_onto(&mol_ref.inner, Some(&s))
+        } else {
+            self.inner.superimpose_onto(&mol_ref.inner, None)
+        };
+
+        Ok(rmsd)
+    }
+}
+// superimpose-dd828a64 ends here
+
+// [[file:../spdkit-python.note::parser-a247ca8c][parser-a247ca8c]]
+/// Construct `Molecule` object from a file `path`. If the file
+/// contains multiple molecules, only the last one will be read.
+#[pymethods]
+impl PyMolecule {
+    #[staticmethod]
+    pub fn from_file(path: String) -> PyResult<Self> {
+        let inner = Molecule::from_file(&path)?;
+        // let instance = cls.call0()?;
+        // let mol: Py<Self> = instance.extract()?;
+        Ok(Self { inner })
+    }
+
+    /// Construct `Molecule` from string `src` in specific molecular file
+    /// format `fmt`. Possible fmt includes `text/xyz`, `text/pxyz`,
+    /// `vasp/input` etc.
+    #[staticmethod]
+    pub fn from_string(src: String, fmt: String) -> PyResult<Self> {
+        let inner = Molecule::from_str(&src, &fmt)?;
+        Ok(Self { inner })
+    }
+
+    #[staticmethod]
+    /// Describe available backends for reading/writing molecule
+    pub fn describe_available_backends() {
+        gchemol::io::describe_backends();
+    }
+}
+// parser-a247ca8c ends here
+
+// [[file:../spdkit-python.note::spdkit-a0b7f205][spdkit-a0b7f205]]
+#[pymethods]
+impl PyMolecule {
+    pub fn educated_rebond(&mut self) {
+        use educate::prelude::*;
+        self.inner.educated_rebond();
+    }
+
+    pub fn educated_clean(&mut self) {
+        use educate::prelude::*;
+        self.inner.educated_clean();
+    }
+
+    pub fn educated_clean_selection(&mut self, selection: Selection) -> PyResult<()> {
+        use educate::prelude::*;
+        let selection = selection.try_into_list()?;
+        self.inner.educated_clean_selection(&selection);
+        Ok(())
+    }
+
+    /// Return a unique fingerprint of current molecule based on its bond
+    /// graph. This fingerprint is independent of its 3d geometry or atom
+    /// numbering.
+    ///
+    /// # NOTE
+    ///   * This operation internally call `reorder_cannonically` method.
+    pub fn fingerprint(&self) -> String {
+        use spdkit::prelude::FingerPrintExt;
+        self.inner.fingerprint()
+    }
+
+    /// Calculate disparity between `self` and `mol` using algorithm
+    /// proposed by Lazauskas et al (DOI:10.1039/C6NR09072A)
+    pub fn disparity_between(&self, mol: &PyMolecule) -> f64 {
+        use spdkit::prelude::SimilarityExt;
+        self.inner.disparity_between(&mol.inner)
+    }
+
+    /// This is an operation of reordering the atoms in a way that does not depend
+    /// on where they were before. The bonding graph is important for this
+    /// operation.
+    pub fn reorder_cannonically(&mut self) -> (Vec<usize>, Vec<usize>) {
+        use spdkit::prelude::FingerPrintExt;
+        self.inner.reorder_cannonically()
+    }
+
+    /// Make `self` resemble `mol_ref` by applying rigid operations in
+    /// permutation, translation or rotation, without changing inner
+    /// 3D geometry. Equivalent atoms are recoginized based on
+    /// connectivity. Return alignment rmsd on success.
+    pub fn resemble_rigidly(&mut self, mol_ref: PyMolecule) -> Result<f64> {
+        use spdkit::prelude::FingerPrintExt;
+        self.inner.resemble_rigidly(&mol_ref.inner)
+    }
+
+    /// Convert `Molecule` to a graph object for distance geometry
+    /// refinement.
+    pub fn to_distance_geometry_graph(&self) -> DgGraph {
+        let dg = self.inner.distance_geometry_graph();
+        DgGraph { inner: dg }
+    }
+}
+// spdkit-a0b7f205 ends here
 
 // [[file:../spdkit-python.note::df84f7ba][df84f7ba]]
 use distances::prelude::*;
