@@ -37,7 +37,6 @@ pub struct PyAtom {
 impl PyAtom {
     #[new]
     /// Construct `Atom` object from `symbol` and `position`.
-    #[args(position = "[0.0, 0.0, 0.0]")]
     pub fn new(symbol: String, position: [f64; 3]) -> Self {
         Self {
             inner: Atom::new(symbol, position),
