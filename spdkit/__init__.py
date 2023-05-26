@@ -51,7 +51,7 @@ def from_pmg_structure(pmg_structure):
 
     mol = Molecule.from_atoms(atoms)
     # lattice object
-    lat = Lattice(pmg_struct.lattice.matrix.tolist())
+    lat = Lattice(pmg_structure.lattice.matrix.tolist())
     mol.set_lattice(lat)
     return mol
 
