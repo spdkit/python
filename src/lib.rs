@@ -1145,6 +1145,11 @@ impl PyChemicalEnvironment {
         self.inner.set_distance_constraint(u, v, d)
     }
 
+    /// Return the elastic force, stress tensor on atom `u` in `mol`.
+    pub fn get_energy_force_stress_tensor(&self, mol: PyMolecule, u: usize) -> (f64, [f64; 3], [f64; 9]) {
+        self.inner.get_energy_force_stress_tensor(&mol.inner, u)
+    }
+
     /// Create central molecule from atom `i` with direct neighbors.
     pub fn create_central_molecule(&self, i: usize, mol_alt: Option<PyMolecule>) -> Option<PyMolecule> {
         let inner = self.inner.create_central_molecule(i, mol_alt.map(|m| m.inner).as_ref())?;

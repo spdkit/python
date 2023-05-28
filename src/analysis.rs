@@ -5,7 +5,7 @@ use pyo3::prelude::*;
 
 // [[file:../spdkit-python.note::cb1870b5][cb1870b5]]
 use crate::PyMolecule;
-use bvcalc::*;
+use bond_valence::*;
 use std::collections::HashMap;
 
 /// Represent the evaluated atom properties such as atom valence,
