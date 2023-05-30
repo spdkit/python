@@ -205,7 +205,6 @@ use gosh::optim::OptimizedIter;
 // [[file:../spdkit-python.note::a3472bf1][a3472bf1]]
 use std::sync::Arc;
 
-// #[pyclass(name = "BlackBoxModel", subclass)]
 #[pyclass(name = "ChemicalModel")]
 #[derive(Clone)]
 pub struct PyChemicalModel {
@@ -224,18 +223,23 @@ impl ChemicalModel for PyChemicalModel {
     fn compute(&mut self, mol: &Molecule) -> Result<Computed> {
         use pyo3::types::PyDict;
 
-        let (energy, forces) = Python::with_gil(|py| -> PyResult<(f64, Vec<[f64; 3]>)> {
+        let mut computed = Computed::default();
+        Python::with_gil(|py| -> PyResult<()> {
             let mol = PyMolecule { inner: mol.clone() };
             let s = self.inner.call_method1(py, "compute", (mol,))?;
             let d = s.downcast::<PyDict>(py)?;
             let e = d.get_item("energy").unwrap().extract()?;
             let f = d.get_item("forces").unwrap().extract()?;
-            Ok((e, f))
+            computed.set_energy(e);
+            computed.set_forces(f);
+            if let Some(s) = d.get_item("stress") {
+                debug!("read stress from dict");
+                let stress = s.extract()?;
+                computed.set_stress(stress);
+            }
+            Ok(())
         })?;
 
-        let mut computed = Computed::default();
-        computed.set_energy(energy);
-        computed.set_forces(forces);
         Ok(computed)
     }
 }
