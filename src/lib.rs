@@ -697,6 +697,12 @@ impl PyMolecule {
         self.inner.set_lattice(lat.inner);
     }
 
+    /// Set periodic Lattice as `lat`, and scaled atom positions to fit new
+    /// lattice. Will panic if not a periodic structure.
+    pub fn set_lattice_scaled(&mut self, lat: PyLattice) {
+        self.inner.set_lattice_scaled(lat.inner);
+    }
+
     /// Get periodic lattice.
     pub fn get_lattice(&self) -> Option<PyLattice> {
         let lat = self.inner.get_lattice()?;
