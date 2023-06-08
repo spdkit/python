@@ -29,6 +29,16 @@ impl PyBondValenceModel {
         BondValenceModel::evaluate(&mol.inner, &opts)
     }
 
+    /// Create chemical bonds from nearest neighbors based on bond
+    /// valence values. The atom pair with larger bond valence will be
+    /// set as chemical bond automatically determined by kmean
+    /// clustering algorithm. Return the number of chemical bonds
+    /// created.
+    fn rebond(mol: PyMolecule, opts: Option<Options>) -> usize {
+        let opts = opts.unwrap_or_else(|| Options::default_from(&mol.inner));
+        BondValenceModel::rebond(&mol.inner, &opts)
+    }
+
     #[staticmethod]
     /// Return default bond valence options
     fn default_options(mol: PyMolecule) -> Options {
