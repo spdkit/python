@@ -24,9 +24,14 @@ impl PyBondValenceModel {
     ///   * mol: The molecule to evaluate.
     ///   * opts: optional bond valence parameters
     #[staticmethod]
-    fn evaluate(mol: PyMolecule, opts: Option<Options>) -> HashMap<usize, Evaluated> {
-        let opts = opts.unwrap_or_else(|| Options::default_from(&mol.inner));
-        BondValenceModel::evaluate(&mol.inner, &opts)
+    fn evaluate(mol: PyMolecule, opts: Option<&mut Options>) -> HashMap<usize, Evaluated> {
+        // let mut opts = opts.unwrap_or_else(|| Options::default_from(&mol.inner));
+        if let Some(opts) = opts {
+            BondValenceModel::evaluate(&mol.inner, opts)
+        } else {
+            let mut opts = Options::default_from(&mol.inner);
+            BondValenceModel::evaluate(&mol.inner, &mut opts)
+        }
     }
 
     /// Create chemical bonds from nearest neighbors based on bond
@@ -36,10 +41,15 @@ impl PyBondValenceModel {
     /// created.
     #[staticmethod]
     #[pyo3(signature = (mol, /, opts=None, ignore_pbc=false))]
-    fn rebond(mol: &mut PyMolecule, opts: Option<Options>, ignore_pbc: bool) -> usize {
-        let opts = opts.unwrap_or_else(|| Options::default_from(&mol.inner));
+    fn rebond(mol: &mut PyMolecule, opts: Option<&mut Options>, ignore_pbc: bool) -> usize {
         let lat = if ignore_pbc { mol.unbuild_crystal() } else { None };
-        let nbonds = BondValenceModel::rebond(&mut mol.inner, &opts);
+        let nbonds = if let Some(opts) = opts {
+            BondValenceModel::rebond(&mut mol.inner, opts)
+        } else {
+            let mut opts = Options::default_from(&mol.inner);
+            BondValenceModel::rebond(&mut mol.inner, &mut opts)
+        };
+
         if ignore_pbc {
             if let Some(lat) = lat {
                 mol.set_lattice(lat);
