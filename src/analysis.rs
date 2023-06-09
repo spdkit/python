@@ -34,9 +34,18 @@ impl PyBondValenceModel {
     /// set as chemical bond automatically determined by kmean
     /// clustering algorithm. Return the number of chemical bonds
     /// created.
-    fn rebond(mol: PyMolecule, opts: Option<Options>) -> usize {
+    #[staticmethod]
+    #[pyo3(signature = (mol, /, opts=None, ignore_pbc=false))]
+    fn rebond(mol: &mut PyMolecule, opts: Option<Options>, ignore_pbc: bool) -> usize {
         let opts = opts.unwrap_or_else(|| Options::default_from(&mol.inner));
-        BondValenceModel::rebond(&mol.inner, &opts)
+        let lat = if ignore_pbc { mol.unbuild_crystal() } else { None };
+        let nbonds = BondValenceModel::rebond(&mut mol.inner, &opts);
+        if ignore_pbc {
+            if let Some(lat) = lat {
+                mol.set_lattice(lat);
+            }
+        }
+        nbonds
     }
 
     #[staticmethod]
