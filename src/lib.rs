@@ -739,20 +739,37 @@ impl PyMolecule {
         Ok(n)
     }
 
-    #[pyo3(signature = (ignore_pbc=false, bond_tolerance=0.45, bonding_scheme=None))]
-    #[pyo3(text_signature = "(ignore_pbc=False, bond_tolerance=0.45, bonding_scheme=None)")]
+    #[pyo3(signature = (ignore_pbc=false, bond_tolerance=None, cov_radius_scale_factor=None, bonding_scheme=None))]
+    #[pyo3(text_signature = "(ignore_pbc=False, bond_tolerance=None, radius_scale_factor=None, bonding_scheme=None)")]
     /// Recalculates all bonds in molecule based on interatomic
     /// distances and covalent radii. For periodic system, the bonds
     /// are determined in miniumu image convention.
     ///
     /// # Parameters
-    /// * ignore_pbc: force to ignore periodicity when search nearest neighbors. The default is False.
-    /// * bonding_scheme: the bonding scheme for rebond. Avaialbe scheme includes jmol and multiwfn.
-    /// * bond_tolerance: the bonding tolerance used in jmol scheme.
-    pub fn rebond(&mut self, ignore_pbc: bool, bond_tolerance: f64, bonding_scheme: Option<String>) {
+    /// * ignore_pbc: force to ignore periodicity when search nearest
+    ///   neighbors. The default is False.
+    /// * bonding_scheme: the bonding scheme for rebond. Avaialbe scheme
+    ///   includes jmol and multiwfn.
+    /// * bond_tolerance: the bonding tolerance used in jmol scheme. The
+    ///   default value is 0.45.
+    /// * cov_radius_scale_factor: set the scale factor for covalent
+    ///   radius for perception of bond in multiwfn scheme. The
+    ///   default value is 1.15.
+    pub fn rebond(
+        &mut self,
+        ignore_pbc: bool,
+        bond_tolerance: Option<f64>,
+        cov_radius_scale_factor: Option<f64>,
+        bonding_scheme: Option<String>,
+    ) {
         let mut options = Molecule::rebond_options();
         options.ignore_pbc = ignore_pbc;
-        options.bond_tolerance = bond_tolerance;
+        if let Some(v) = bond_tolerance {
+            options.bond_tolerance = v;
+        }
+        if let Some(v) = cov_radius_scale_factor {
+            options.cov_radius_scale_factor = v;
+        }
         if let Some(s) = bonding_scheme {
             options.set_bonding_scheme(&s);
         }
