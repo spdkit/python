@@ -144,17 +144,10 @@ def to_pmg_periodic_site(atom: Atom, lattice):
 # fbe586a0 ends here
 
 # [[file:../spdkit-python.note::ec59e65f][ec59e65f]]
-def view_in_pymol(mol: Molecule, rebond=False, format="pdb"):
+def view_in_pymol(mol: Molecule, format="mol2"):
     """View molecule object using pymol."""
     import subprocess, tempfile
     import time
-
-    if rebond:
-        # rebuild connectivity without periodic images
-        lat = mol.unbuild_crystal()
-        mol.rebond()
-        if lat:
-            mol.set_lattice(lat)
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=f".{format}") as f:
         molfile = f.name
