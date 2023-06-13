@@ -341,11 +341,9 @@ def view_in_agui(mols: Union[Molecule, List[Molecule]], sleep=5):
 
     with tempfile.TemporaryDirectory() as td:
         # the molecule file for visualization in jmol
-        molfile = os.path.join(td, "spdkit.mol2")
-        for m in mols:
-            m.rebond(ignore_pbc=True)
+        molfile = os.path.join(td, "spdkit.gjf")
         io.write(molfile, mols)
-        # open jmol script
+        # open agui script
         p = subprocess.Popen(
             ["agui", molfile], stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
