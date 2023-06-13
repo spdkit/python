@@ -739,8 +739,10 @@ impl PyMolecule {
         Ok(n)
     }
 
-    #[pyo3(signature = (ignore_pbc=false, bond_tolerance=None, bond_scale_factor=None, bonding_scheme=None))]
-    #[pyo3(text_signature = "(ignore_pbc=False, bond_tolerance=None, bond_scale_factor=None, bonding_scheme=None)")]
+    #[pyo3(signature = (ignore_pbc=false, bond_tolerance=None, bond_scale_factor=None, bonding_scheme=None, distance_cutoff=None))]
+    #[pyo3(
+        text_signature = "(ignore_pbc=False, bond_tolerance=None, bond_scale_factor=None, bonding_scheme=None, distance_cutoff=None)"
+    )]
     /// Recalculates all bonds in molecule based on interatomic
     /// distances and covalent radii. For periodic system, the bonds
     /// are determined in miniumu image convention.
@@ -755,17 +757,21 @@ impl PyMolecule {
     /// * bond_scale_factor: set the scale factor for covalent or vdw radius
     ///   for bond perception, only relevant in multiwfn or vmd scheme. The
     ///   default value is 1.15 for multiwfn and 0.6 for vmd.
+    /// * distance_cutoff: the nearest neighbor search distance cutoff. The
+    ///   default value is 3.6
     pub fn rebond(
         &mut self,
         ignore_pbc: bool,
         bond_tolerance: Option<f64>,
         bond_scale_factor: Option<f64>,
         bonding_scheme: Option<String>,
+        distance_cutoff: Option<f64>,
     ) {
         let mut options = Molecule::rebond_options();
         options.ignore_pbc = ignore_pbc;
         options.bond_tolerance = bond_tolerance;
         options.bond_scale_factor = bond_scale_factor;
+        options.distance_cutoff = distance_cutoff;
         if let Some(s) = bonding_scheme {
             options.set_bonding_scheme(&s);
         }
