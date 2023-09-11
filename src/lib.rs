@@ -272,6 +272,12 @@ impl PyLattice {
     pub fn scale_by_c(&mut self, v: f64) {
         self.inner.scale_by_c(v)
     }
+
+    /// Create a new copy of `Lattice`.
+    pub fn clone(&self) -> Self {
+        let inner = self.inner.clone();
+        Self { inner }
+    }
 }
 // c8807c91 ends here
 
