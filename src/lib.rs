@@ -443,10 +443,23 @@ impl PyMolecule {
         Self { inner }
     }
 
-    /// Return its json representation of molecule object.
-    pub fn to_json(&self) -> PyResult<String> {
+    /// Return its json representation of molecule object for template rendering.
+    pub fn to_json_renderable(&self) -> PyResult<String> {
         let json = gchemol::io::to_json(&self.inner)?;
         Ok(json)
+    }
+
+    /// Return its json representation of molecule object.
+    pub fn to_json(&self) -> PyResult<String> {
+        let json = self.inner.to_json()?;
+        Ok(json)
+    }
+
+    /// Return its json representation of molecule object.
+    #[staticmethod]
+    pub fn from_json(json: &str) -> PyResult<Self> {
+        let inner = Molecule::from_json(json)?;
+        Ok(Self { inner })
     }
 
     /// Replace atom `i` with new `atom`.
