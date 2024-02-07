@@ -861,6 +861,12 @@ impl PyMolecule {
         self.inner.remove_bond(i, j);
     }
 
+    /// Returns true if the molcule contains bond between atom `i` and `j`
+    #[pyo3(text_signature = "($self, i, j, /)")]
+    pub fn has_bond(&self, i: usize, j: usize) -> bool {
+        self.inner.has_bond(i, j)
+    }
+
     /// Return all directly bonded atoms in serial numbers with atom `n`.
     #[pyo3(text_signature = "($self, n)")]
     pub fn connected(&self, n: usize) -> Vec<usize> {
