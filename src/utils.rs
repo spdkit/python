@@ -59,6 +59,26 @@ fn gaussview_selection_commands(selected: Vec<usize>) -> Result<()> {
 }
 // 4c0ea8d1 ends here
 
+// [[file:../spdkit-python.note::22b53bc5][22b53bc5]]
+use super::PyMolecule;
+
+#[pyfunction]
+/// Rebond all molecules in parallel
+fn par_rebond(mols: Vec<&PyCell<PyMolecule>>) -> Result<()> {
+    use std::ops::DerefMut;
+
+    // workaround for limitation in &mut PyMolecule
+    let mut mols: Vec<_> = mols.into_iter().map(|cell| cell.try_borrow_mut().unwrap()).collect();
+    let mut mols: Vec<_> = mols.iter_mut().map(|refr| refr.deref_mut()).collect();
+
+    mols.as_mut_slice()
+        .into_par_iter()
+        .for_each(|mut mol| mol.rebond(false, None, None, None, None));
+
+    Ok(())
+}
+// 22b53bc5 ends here
+
 // [[file:../spdkit-python.note::0853f16f][0853f16f]]
 pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     let m = PyModule::new(py, name)?;
@@ -69,6 +89,7 @@ pub fn new<'p>(py: Python<'p>, name: &str) -> PyResult<&'p PyModule> {
     m.add_function(wrap_pyfunction!(jmol_selection_commands, m)?)?;
     m.add_function(wrap_pyfunction!(pymol_selection_commands, m)?)?;
     m.add_function(wrap_pyfunction!(gaussview_selection_commands, m)?)?;
+    m.add_function(wrap_pyfunction!(par_rebond, m)?)?;
 
     Ok(m)
 }
