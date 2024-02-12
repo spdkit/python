@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 // 45ba73aa ends here
 
 // [[file:../spdkit-python.note::4cfd5c0b][4cfd5c0b]]
-use super::{PyMolecule, PyMoleculeIter};
+use super::{PyMolecule, PyMoleculeIter, PyLattice};
 
 #[pyfunction]
 /// Read a list of `Molecule` from `path`. Returns an iterator over
@@ -27,6 +27,13 @@ pub fn write(path: String, mols: Vec<PyMolecule>) -> PyResult<()> {
 pub fn guess_format_from_path(path: &str) -> Option<String> {
     let fmt = gchemol::io::guess_format_from_path(path.as_ref())?;
     Some(fmt)
+}
+
+/// Guess chemical file format from `path`
+#[pyfunction]
+pub fn read_lattice_extxyz(line: &str) -> Option<PyLattice> {
+    let inner = gchemol::io::read_lattice_extxyz(line)?;
+    Some(PyLattice { inner })
 }
 
 #[pyfunction]
